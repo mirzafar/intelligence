@@ -30,7 +30,7 @@ class ListUtils:
         return [str(value)]
 
 
-pdfmetrics.registerFont(TTFont("Arial", "static/ARIAL.TTF"))
+pdfmetrics.registerFont(TTFont("Arial", f"{settings['root_dir']}/static/ARIAL.TTF"))
 
 arial_style = ParagraphStyle(
     name="ArialStyle",

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>AI Чат</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <style>
+        .file-item {
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .h-bod {
+            min-height: 80vh;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col items-center pt-6">
+
+<div class="h-bod w-full max-w-6xl h-[85vh] flex rounded-b-xl overflow-hidden shadow border border-t-0 border-gray-200 bg-white">
+
+    <!-- Left sidebar - Chat history -->
+    <aside class="w-1/4 bg-gray-50 p-3 border-r overflow-y-auto">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-sm font-semibold">История чатов</h2>
+            <button id="new-chat" class="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">+ Новый
+            </button>
+        </div>
+        <ul id="chat-list" class="text-xs space-y-1">
+        </ul>
+    </aside>
+
+    <!-- Main chat area -->
+    <main class="flex-1 flex flex-col border-r">
+        <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <div class="text-gray-400 text-sm text-center">Новый чат</div>
+        </div>
+
+        <div class="border-t p-3">
+            <div class="flex items-end gap-2">
+                <textarea id="prompt-input" rows="2" placeholder="Введите сообщение..."
+                          class="flex-1 resize-none bg-gray-100 p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"></textarea>
+                <button id="send-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm">→
+                </button>
+            </div>
+            <div id="attached-files" class="mt-1 text-xs text-gray-500 space-y-1"></div>
+        </div>
+    </main>
+
+    <!-- Right sidebar - Files (collapsible) -->
+    <aside class="w-[200px] bg-gray-50 p-3 overflow-y-auto border-l" id="files-sidebar">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-xs font-semibold">Файлы</h2>
+
+        </div>
+        <div id="files-list" class="space-y-1">
+            <!-- Files will be loaded here -->
+        </div>
+        <div class="mt-2">
+            <input type="file" id="file-upload-input" multiple hidden/>
+            <button id="upload-file-btn"
+                    class="w-full text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
+                <i class="fas fa-plus mr-1 text-[10px]"></i> Добавить
+            </button>
+        </div>
+    </aside>
+</div>
+
+<div id="loader" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="flex items-center space-x-2 text-white">
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+        <span id="loader-text" class="text-sm">Загрузка...</span>
+    </div>
+</div>
+
+<script>
+    let currentChatId = null;
+    let availableFiles = [];
+
+    function showLoader(text = 'Загрузка...') {
+        $('#loader-text').text(text);
+        $('#loader').removeClass('hidden');
+    }
+
+    function hideLoader() {
+        $('#loader').addClass('hidden');
+    }
+
+    function appendMessage(role, text) {
+        const box = $('#chat-box');
+        const bubbleClass = role === 'user'
+            ? 'bg-green-100 text-gray-900 self-end'
+            : 'bg-gray-100 text-gray-800 self-start';
+        box.append(`<div class="max-w-[80%] px-3 py-1.5 rounded-lg ${bubbleClass} whitespace-pre-wrap text-sm">${text}</div>`);
+        box.scrollTop(box[0].scrollHeight);
+    }
+
+    function loadChatHistory() {
+        showLoader('Загрузка истории...');
+        $.getJSON('/api/chats', function (data) {
+            const chatList = $('#chat-list');
+            chatList.empty();
+
+            const items = data.items;
+            if (items.length === 0) {
+                chatList.append('<li class="text-gray-500 text-center py-1 text-xs">Нет истории чатов</li>');
+            } else {
+                items.forEach(chat => {
+                    chatList.append(`
+                        <li class="group flex items-center justify-between hover:bg-gray-100 rounded">
+                            <button class="flex-1 text-left px-1.5 py-0.5 truncate text-xs" onclick="viewChat('${chat._id}')">
+                                ${$('<div>').text(chat.prompt.substring(0, 25) + (chat.prompt.length > 25 ? '...' : '')).html()}
+                            </button>
+                            <button
+                                class="delete-btn p-0.5 text-gray-400 hover:text-red-500 group-hover:visible"
+                                onclick="deleteChat('${chat._id}', this)"
+                            >
+                                <i class="fas fa-trash-alt text-[10px]"></i>
+                            </button>
+                        </li>
+                    `);
+                });
+            }
+            hideLoader();
+        }).fail(() => {
+            alert('Ошибка загрузки истории');
+            hideLoader();
+        });
+    }
+
+    function loadFiles() {
+        showLoader('Загрузка файлов...');
+        $.getJSON('/api/files', function (data) {
+            const filesList = $('#files-list');
+            filesList.empty();
+            availableFiles = data.items || [];
+
+            if (availableFiles.length === 0) {
+                filesList.append('<div class="text-gray-500 text-center py-1 text-xs">Нет файлов</div>');
+            } else {
+                availableFiles.forEach(file => {
+                    filesList.append(`
+                        <div class="file-item flex items-center justify-between p-1.5 bg-white rounded border text-xs">
+                            <span class="truncate flex-1">
+                                ${$('<div>').text(file.title.substring(0, 20) + (file.title.length > 20 ? '...' : '')).html()}
+                            </span>
+                            <div class="flex space-x-1">
+                                <button onclick="deleteFile('${file._id}', this)" class="text-gray-500 hover:text-red-500 p-0.5">
+                                    <i class="fas fa-trash-alt text-[10px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+            hideLoader();
+        }).fail(() => {
+            alert('Ошибка загрузки файлов');
+            hideLoader();
+        });
+    }
+
+    function deleteFile(fileId, button) {
+        if (!confirm('Удалить этот файл?')) return;
+
+        $(button).prop('disabled', true).html('<i class="fas fa-spinner fa-spin text-[10px]"></i>');
+
+        $.ajax({
+            url: `/api/files/${fileId}`,
+            type: 'DELETE',
+            success: function (response) {
+                if (response._success) {
+                    loadFiles();
+                } else {
+                    alert('Ошибка: ' + (response.message || 'Не удалось удалить файл'));
+                    $(button).prop('disabled', false).html('<i class="fas fa-trash-alt text-[10px]"></i>');
+                }
+            },
+            error: function () {
+                alert('Ошибка соединения');
+                $(button).prop('disabled', false).html('<i class="fas fa-trash-alt text-[10px]"></i>');
+            }
+        });
+    }
+
+    function deleteChat(chatId, button) {
+        if (!confirm('Удалить этот чат?')) return;
+
+        $(button).prop('disabled', true).html('<i class="fas fa-spinner fa-spin text-[10px]"></i>');
+
+        $.ajax({
+            url: `/api/chats/${chatId}`,
+            type: 'DELETE',
+            success: function (response) {
+                if (response._success) {
+                    if (currentChatId === chatId) {
+                        $('#new-chat').click();
+                    }
+                    loadChatHistory();
+                } else {
+                    alert('Ошибка: ' + (response.message || 'Не удалось удалить чат'));
+                    $(button).prop('disabled', false).html('<i class="fas fa-trash-alt text-[10px]"></i>');
+                }
+            },
+            error: function () {
+                alert('Ошибка соединения');
+                $(button).prop('disabled', false).html('<i class="fas fa-trash-alt text-[10px]"></i>');
+            }
+        });
+    }
+
+    function viewChat(chatId) {
+        showLoader('Загрузка чата...');
+        $.getJSON(`/api/chats/${chatId}`, function (chat) {
+            const item = chat.item;
+            const box = $('#chat-box');
+            box.empty();
+            appendMessage('user', item.prompt);
+            appendMessage('assistant', item.response);
+
+            $('#prompt-input').prop('readonly', true);
+            $('#send-btn').hide();
+
+            currentChatId = chatId;
+            hideLoader();
+        }).fail(() => {
+            alert('Ошибка загрузки чата');
+            hideLoader();
+        });
+    }
+
+    function uploadFiles(files) {
+        if (files.length === 0) return;
+
+        showLoader('Загрузка файлов...');
+        const formData = new FormData();
+
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+
+        $.ajax({
+            url: '/api/files',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response._success) {
+                    loadFiles();
+                } else {
+                    alert('Ошибка: ' + (response.message || 'Не удалось загрузить файлы'));
+                }
+                hideLoader();
+            },
+            error: function () {
+                alert('Ошибка соединения при загрузке');
+                hideLoader();
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        loadChatHistory();
+        loadFiles();
+
+        $('#upload-file-btn').click(() => $('#file-upload-input').click());
+
+        $('#file-upload-input').on('change', function () {
+            const files = Array.from(this.files);
+            if (files.length > 0) {
+                uploadFiles(files);
+                $(this).val('');
+            }
+        });
+
+        $('#send-btn').click(async function () {
+            const prompt = $('#prompt-input').val().trim();
+            if (!prompt) return alert('Введите сообщение');
+
+            appendMessage('user', prompt);
+            showLoader('Думаю...');
+
+            $('#prompt-input').val('').prop('readonly', true);
+            $('#send-btn').prop('disabled', true);
+
+            try {
+                const assistantMessageId = 'assistant-' + Date.now();
+                $('#chat-box').append(`
+                    <div id="${assistantMessageId}" class="max-w-[80%] px-3 py-1.5 rounded-lg bg-gray-100 text-gray-800 self-start whitespace-pre-wrap text-sm"></div>
+                `);
+                console.log(JSON.stringify({
+                    prompt: prompt
+                }))
+                const response = await fetch('/api/response', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        prompt: prompt
+                    })
+                });
+
+                if (!response.ok) throw new Error(`Ошибка ${response.status}`);
+                if (!response.body) throw new Error('Поток не поддерживается');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let assistantMessage = '';
+
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    console.log(value)
+
+                    const chunk = decoder.decode(value, {stream: true});
+                    console.log(chunk)
+                    assistantMessage += chunk;
+                    $(`#${assistantMessageId}`).text(assistantMessage);
+                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                }
+
+            } catch (error) {
+                $('#chat-box').append(`
+                    <div class="max-w-[80%] px-3 py-1.5 rounded-lg bg-red-100 text-red-800 self-start text-sm">
+                        Ошибка: ${error.message}
+                    </div>
+                `);
+            } finally {
+                $('#prompt-input').prop('readonly', false);
+                $('#send-btn').prop('disabled', false);
+                hideLoader();
+                loadChatHistory();
+            }
+        });
+
+        $('#new-chat').click(function () {
+            $('#prompt-input').val('').prop('readonly', false);
+            $('#attached-files').empty();
+            $('#chat-box').html('<div class="text-gray-400 text-sm text-center">Новый чат</div>');
+            $('#send-btn').show();
+            currentChatId = null;
+            loadFiles();
+        });
+    });
+</script>
+
+</body>
+</html>

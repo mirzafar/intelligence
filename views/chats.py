@@ -24,6 +24,9 @@ class ChatsHandler(BaseHandler):
             title = None
             for c in item['content']:
                 if c['role'] in ['user']:
+                    if c['content'][0]['type'] == 'input_file':
+                        continue
+
                     title = c['content'][0]['text']
                     break
 

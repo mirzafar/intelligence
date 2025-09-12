@@ -5,6 +5,7 @@ from typing import List
 from uuid import uuid4
 
 import tornado.websocket
+import ujson
 from bson import ObjectId
 from pymongo import ReturnDocument
 
@@ -49,7 +50,6 @@ class ResponseHandler(tornado.web.RequestHandler):
                 else:
                     input_content.append(c)
 
-            print('fff ->> ', input_content)
             response = await ai_client.responses.create(
                 model='gpt-5-nano',
                 input=input_content
@@ -90,7 +90,7 @@ class ResponseHandler(tornado.web.RequestHandler):
             })
 
         file_ids = None
-        if chat:
+        if not chat:
             file_ids = await self.settings['db'].files.distinct('external_id', {'is_active': True})
 
         success, text, content = await self.function(
@@ -110,9 +110,11 @@ class ResponseHandler(tornado.web.RequestHandler):
             if chat:
                 await self.settings['db'].chats.update_one({'_id': ObjectId(chat_id)}, {'$set': data})
             else:
-                await self.settings['db'].chats.insert_one(data)
+                inserted = await self.settings['db'].chats.insert_one(data)
+                if inserted.inserted_id:
+                    chat_id = str(inserted.inserted_id)
 
-            self.write(text)
+            self.write(ujson.dumps({'text': text, 'chat_id': chat_id}))
 
         else:
             self.write('ERROR')

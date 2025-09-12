@@ -542,12 +542,17 @@
                     if (done) break;
 
                     const chunk = decoder.decode(value, {stream: true});
-                    assistantMessage += chunk;
+                    const parsedData = JSON.parse(chunk);
+
+                    console.log('chunk:', parsedData);
+                    assistantMessage += parsedData.text;
+                    currentChatId = parsedData.chat_id;
 
                     $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
                     $('#prompt-input').val('');
                 }
                 appendMessage('assistant', assistantMessage, ms_uuid);
+
 
             } catch (error) {
                 appendMessage('assistant', `Ошибка: ${error.message}`);

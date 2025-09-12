@@ -10,6 +10,7 @@ openai = "*"
 tornado-admin = "*"
 aiofiles = "*"
 reportlab = "*"
+ujson = "*"
 
 [dev-packages]
 

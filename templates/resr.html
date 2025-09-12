@@ -376,9 +376,9 @@
                 availableFiles.forEach(file => {
                     filesList.append(`
                         <div class="file-item flex items-center justify-between p-1.5 bg-white rounded border text-xs">
-                            <span class="truncate flex-1">
+                            <a target="_blank" href="/api/files/${file._id}/download" class="truncate flex-1 text-emerald-600 hover:underline">
                                 ${$('<div>').text(file.title.substring(0, 20) + (file.title.length > 20 ? '...' : '')).html()}
-                            </span>
+                            </a>
                             <div class="flex space-x-1">
                                 <button onclick="deleteFile('${file._id}', this)" class="text-gray-500 hover:text-red-500 p-0.5">
                                     <i class="fas fa-trash-alt text-[10px]"></i>
@@ -517,14 +517,10 @@
 
             let ms_uuid = generateUUID();
 
-            appendMessage('user', prompt, ms_uuid);
+            appendMessage('user', prompt);
             showLoader('Думаю...');
 
             try {
-                const assistantMessageId = 'assistant-' + Date.now();
-                $('#chat-box').append(`
-                    <div id="${assistantMessageId}" class="max-w-[80%] px-3 py-1.5 rounded-lg bg-gray-100 text-gray-800 self-start whitespace-pre-wrap text-sm"></div>
-                `);
                 const response = await fetch('/api/response', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -544,24 +540,23 @@
                 while (true) {
                     const {done, value} = await reader.read();
                     if (done) break;
+
                     const chunk = decoder.decode(value, {stream: true});
                     assistantMessage += chunk;
-                    $(`#${assistantMessageId}`).text(assistantMessage);
+
                     $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
                     $('#prompt-input').val('');
                 }
+                appendMessage('assistant', assistantMessage, ms_uuid);
 
             } catch (error) {
-                $('#chat-box').append(`
-                    <div class="max-w-[80%] px-3 py-1.5 rounded-lg bg-red-100 text-red-800 self-start text-sm">
-                        Ошибка: ${error.message}
-                    </div>
-                `);
+                appendMessage('assistant', `Ошибка: ${error.message}`);
             } finally {
                 hideLoader();
                 loadChatHistory();
             }
         });
+
 
         $('#new-chat').click(function () {
             $('#attached-files').empty();

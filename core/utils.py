@@ -3,6 +3,7 @@ import uuid
 from typing import Optional
 
 import aiofiles
+from docx import Document
 
 from settings import settings
 
@@ -31,13 +32,16 @@ async def save_file(file, _type: str = 'text') -> tuple[bool, Optional[str]]:
     uid = str(uuid.uuid4())
 
     if _type == 'text':
-        file_name = f'{file_path}/{uid[:2]}/{uid[2:4]}/{uid}.txt'
+        file_name = f'{file_path}/{uid[:2]}/{uid[2:4]}/{uid}.docx'
         os.makedirs(f'{file_path}/{uid[:2]}/{uid[2:4]}', 0o755, True)
 
-        async with aiofiles.open(file_name, 'w') as f:
-            await f.write(file)
+        doc = Document()
 
-        return True, f'{uid[:2]}/{uid[2:4]}/{uid}.txt'
+        doc.add_paragraph(file)
+
+        doc.save(file_name)
+
+        return True, f'{uid[:2]}/{uid[2:4]}/{uid}.docx'
 
     else:
         ext = file.name.split('.')[len(file.name.split('.')) - 1]

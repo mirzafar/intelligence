@@ -6,7 +6,8 @@ import tornado.web
 import tornado.websocket
 
 from core.ai_client import ai_client
-from core.views import MainHandler, ChatsHandler, ResponseHandler, ChatHandler, FilesHandler, FileHandler
+from core.views import MainHandler, ChatsHandler, ResponseHandler, ChatHandler, FilesHandler, FileHandler, \
+    FileDownloadHandler
 from settings import settings as stg
 
 
@@ -26,6 +27,7 @@ def make_app():
         (r'/api/response', ResponseHandler),
         (r'/api/files', FilesHandler),
         (r'/api/files/([a-fA-F0-9]{24})', FileHandler),
+        (r'/api/files/([a-fA-F0-9]{24})/download', FileDownloadHandler),
     ], **settings, autoreload=True)
 
 

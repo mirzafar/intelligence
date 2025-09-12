@@ -1,10 +1,11 @@
 import json
+import os
 import traceback
 from datetime import datetime
 from typing import List
+from urllib.parse import quote
 from uuid import uuid4
 
-import tornado.web
 import tornado.websocket
 from bson import ObjectId
 from pymongo import ReturnDocument
@@ -12,6 +13,7 @@ from pymongo import ReturnDocument
 from core.ai_client import ai_client
 from core.handlers import BaseHandler
 from core.utils import StrUtils, system_message, save_file
+from settings import settings
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -46,9 +48,19 @@ class ResponseHandler(tornado.web.RequestHandler):
                 ]
             })
 
+            input_content = []
+            for c in content:
+                if c['role'] in ['assistant']:
+                    input_content.append({
+                        'role': 'assistant',
+                        'content': c['content']
+                    })
+                else:
+                    input_content.append(c)
+
             response = await ai_client.responses.create(
                 model='gpt-5-nano',
-                input=content
+                input=input_content
             )
 
             if response.output_text:
@@ -291,3 +303,30 @@ class FileHandler(BaseHandler):
                 traceback.print_exc()
 
         self.success(data={})
+
+
+class FileDownloadHandler(BaseHandler):
+    async def get(self, file_id):
+        item = await self.settings['db'].files.find_one({
+            '_id': ObjectId(file_id)
+        })
+        if not item or not item.get('file_path'):
+            return self.error(message='File not found')
+
+        file_path = settings.get('root_dir', '') + '/static/uploads/' + item['file_path']
+
+        original_filename = os.path.basename(item['file_path'])
+        file_extension = os.path.splitext(original_filename)[1]
+        download_filename = f"{item['title']}{file_extension}"
+
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Disposition', f'attachment; filename="{quote(download_filename)}"')
+
+        with open(file_path, 'rb') as f:
+            while True:
+                data = f.read(4096)
+                if not data:
+                    break
+                self.write(data)
+
+        self.finish()

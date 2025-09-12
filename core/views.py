@@ -58,6 +58,7 @@ class ResponseHandler(tornado.web.RequestHandler):
                 else:
                     input_content.append(c)
 
+            print('fff ->> ', input_content)
             response = await ai_client.responses.create(
                 model='gpt-5-nano',
                 input=input_content

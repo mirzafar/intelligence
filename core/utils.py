@@ -4,6 +4,12 @@ from typing import Optional
 
 import aiofiles
 from docx import Document
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import SimpleDocTemplate, Paragraph
 
 from settings import settings
 
@@ -24,6 +30,22 @@ class ListUtils:
         return [str(value)]
 
 
+pdfmetrics.registerFont(TTFont("Arial", "static/ARIAL.TTF"))
+
+arial_style = ParagraphStyle(
+    name="ArialStyle",
+    fontName="Arial",
+    fontSize=12,
+    leading=16,
+    firstLineIndent=0,
+    leftIndent=0,
+    rightIndent=0,
+    spaceAfter=8,
+)
+
+styles = getSampleStyleSheet()
+
+
 async def save_file(file, _type: str = 'text') -> tuple[bool, Optional[str]]:
     if not file:
         return False, None
@@ -32,16 +54,18 @@ async def save_file(file, _type: str = 'text') -> tuple[bool, Optional[str]]:
     uid = str(uuid.uuid4())
 
     if _type == 'text':
-        file_name = f'{file_path}/{uid[:2]}/{uid[2:4]}/{uid}.docx'
+        file_name = f'{file_path}/{uid[:2]}/{uid[2:4]}/{uid}.pdf'
         os.makedirs(f'{file_path}/{uid[:2]}/{uid[2:4]}', 0o755, True)
 
-        doc = Document()
+        pdf = SimpleDocTemplate(file_name, pagesize=A4)
+        story = []
 
-        doc.add_paragraph(file)
+        for x in file.splitlines():
+            story.append(Paragraph(x, arial_style))
 
-        doc.save(file_name)
+        pdf.build(story)
 
-        return True, f'{uid[:2]}/{uid[2:4]}/{uid}.docx'
+        return True, f'{uid[:2]}/{uid[2:4]}/{uid}.pdf'
 
     else:
         ext = file.name.split('.')[len(file.name.split('.')) - 1]

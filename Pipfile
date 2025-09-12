@@ -9,7 +9,7 @@ motor = "*"
 openai = "*"
 tornado-admin = "*"
 aiofiles = "*"
-python-docx = "*"
+reportlab = "*"
 
 [dev-packages]
 

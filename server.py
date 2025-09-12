@@ -6,8 +6,15 @@ import tornado.web
 import tornado.websocket
 
 from core.ai_client import ai_client
-from core.views import MainHandler, ChatsHandler, ResponseHandler, ChatHandler, FilesHandler, FileHandler, \
+from views import (
+    MainHandler,
+    ChatsHandler,
+    ResponseHandler,
+    ChatHandler,
+    FilesHandler,
+    FileHandler,
     FileDownloadHandler
+)
 from settings import settings as stg
 
 

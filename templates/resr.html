@@ -79,6 +79,20 @@
             animation: popup-scale 0.25s ease-out;
         }
 
+        .user-bubble {
+            background: linear-gradient(135deg, #06b6d491, #3b82f6d9);
+            color: #fff;
+            border-radius: 12px;
+            padding: 8px 12px;
+        }
+
+        .assistant-bubble {
+            background: #f1f5f9; /* светло-серый */
+            color: #333;
+            border-radius: 12px;
+            padding: 8px 12px;
+        }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2 md:p-4">
@@ -276,11 +290,14 @@
         const isUser = role === 'user';
 
         // Telegram colors
-        const userStyle = "background:#03a9f438; color:#1a1a1a; border-radius: 12px 12px 12px 12px;";
-        const assistantStyle = "background:#ffffff; color:#1a1a1a; border:1px solid #e5e7eb; border-radius: 12px 12px 12px 12px;";
+        const bubbleClass = isUser
+            ? 'user-bubble self-end'
+            : 'assistant-bubble self-start';
+        // const userStyle = "background:#03a9f438; color:#1a1a1a; border-radius: 12px 12px 12px 12px;";
+        // const assistantStyle = "background:#ffffff; color:#1a1a1a; border:1px solid #e5e7eb; border-radius: 12px 12px 12px 12px;";
 
         // Определяем стиль пузыря
-        const bubbleStyle = isUser ? userStyle : assistantStyle;
+        // const bubbleStyle = isUser ? userStyle : assistantStyle;
 
         // Кнопка redirect только для ассистента
         let redirectBtn = '';
@@ -296,8 +313,7 @@
         const bubble = `
       <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
         <div id="${id}"
-             class="relative group max-w-[75%] px-3 py-2 text-sm whitespace-pre-wrap shadow-sm"
-             style="${bubbleStyle}"
+             class="relative group max-w-[75%] px-3 py-2 text-sm whitespace-pre-wrap shadow-sm ${bubbleClass}"
              ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
           <div class="msg-text">${$('<div>').text(text).html()}</div>
           ${redirectBtn}

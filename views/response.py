@@ -24,13 +24,15 @@ class ResponseHandler(tornado.web.RequestHandler):
                     {'role': 'system', 'content': system_message},
                 ]
 
-                for file_id in file_ids or []:
+                if file_ids:
                     content.append({
                         'role': 'user',
-                        'content': [{
-                            'type': 'input_file',
-                            'file_id': file_id
-                        }]
+                        'content': [
+                            *[
+                                {'type': 'input_file', 'file_id': fid}
+                                for fid in file_ids
+                            ]
+                        ]
                     })
 
             content.append({

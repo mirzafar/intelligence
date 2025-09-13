@@ -97,7 +97,7 @@ class ChatHandler(BaseHandler):
 
                 return self.error(message=str(er))
 
-            data = {
+            item = {
                 'title': filename,
                 'is_active': True,
                 'external_id': upload_file.id,
@@ -105,10 +105,27 @@ class ChatHandler(BaseHandler):
                 'created_at': datetime.now()
             }
 
-            inserted = await self.settings['db'].files.insert_one(data)
+            inserted = await self.settings['db'].files.insert_one(item)
 
             if not inserted.inserted_id:
                 return self.error(message='Операция не выполнена')
+
+            return self.success(data={})
+
+        elif action == 'edit_message':
+            chat = await self.settings['db'].chats.find_one(
+                {'_id': ObjectId(chat_id)}
+            )
+
+            if not chat:
+                return self.error('Chat not found')
+
+            content = chat['content']
+            for c in content:
+                if c['role'] == 'assistant' and data.get('text') and c['ms_uuid'] == data.get('messageId'):
+                    c['content'] = data.get('text')
+
+            await self.settings['db'].chats.update_one({'_id': ObjectId(chat_id)}, {'$set': {'content': content}})
 
             return self.success(data={})
 

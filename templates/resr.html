@@ -285,7 +285,11 @@
         fetch(`/api/chats/${currentChatId}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({messageId: id, text: newText})
+            body: JSON.stringify({
+                action: 'edit_message',
+                messageId: id,
+                text: newText
+            })
         })
             .then(r => r.json())
             .then(res => {

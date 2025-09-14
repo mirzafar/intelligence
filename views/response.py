@@ -1,13 +1,12 @@
 import json
-import traceback
-from datetime import datetime
-from typing import List
-from uuid import uuid4
-
 import tornado.websocket
+import traceback
 import ujson
 from bson import ObjectId
+from datetime import datetime
 from pymongo import ReturnDocument
+from typing import List
+from uuid import uuid4
 
 from core.ai_client import ai_client
 from core.utils import StrUtils, system_message
@@ -116,8 +115,7 @@ class ResponseHandler(tornado.web.RequestHandler):
                 if inserted.inserted_id:
                     chat_id = str(inserted.inserted_id)
 
-            self.write(ujson.dumps({'text': text, 'chat_id': chat_id}))
-
+            self.write(json.dumps({'text': text, 'chat_id': chat_id}, ensure_ascii=False))
         else:
             self.write('ERROR')
 

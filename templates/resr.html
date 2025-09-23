@@ -93,6 +93,23 @@
             padding: 8px 12px;
         }
 
+        .chat-item {
+            border-radius: 6px;
+            transition: background-color .15s ease;
+        }
+
+        .chat-item:hover {
+            background: #e5e7eb; /* темнее при наведении */
+        }
+
+        .chat-item.active {
+            background: #cbd5e1; /* заметно темнее для активного */
+        }
+
+        .chat-item.active:hover {
+            background: #94a3b8; /* ещё темнее при наведении активного */
+        }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2 md:p-4">
@@ -303,11 +320,12 @@
         let redirectBtn = '';
         if (!isUser) {
             redirectBtn = `
-          <button onclick="openRedirectModal('${id}')"
-                  class="absolute top-1 right-2 text-gray-400 hover:text-emerald-600 transition">
-            <i class="fas fa-share"></i>
-          </button>
-        `;
+              <button onclick="openRedirectModal('${id}')"
+                      class="absolute top-1 right-2 text-gray-400 hover:text-emerald-600 transition"
+                      title="Сохранить в базу" aria-label="Сохранить в базу">
+                <i class="fas fa-download"></i>
+              </button>
+            `;
         }
 
         const bubble = `
@@ -343,6 +361,16 @@
         // при потере фокуса → автосохранение
         el.off('blur').on('blur', function () {
             saveMessage(id);
+        });
+
+        // при Enter → сохранить сразу
+        el.off('keydown').on('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();   // блокируем перевод строки
+                saveMessage(id);      // сохраняем
+                el.blur();            // снимаем редактирование
+            }
+            // если Shift+Enter → просто оставить стандартное поведение (новая строка)
         });
 
     }
@@ -417,8 +445,9 @@
             } else {
                 items.forEach(chat => {
                     chatList.append(`
-                        <li class="group flex items-center justify-between hover:bg-gray-100 rounded">
-                            <button class="flex-1 text-left px-1.5 py-0.5 truncate text-xs" onclick="viewChat('${chat._id}')">
+                        <li class="chat-item group flex items-center justify-between">
+                            <button class="flex-1 text-left px-1.5 py-1 truncate text-xs"
+                                    onclick="viewChat('${chat._id}', this)">
                                 ${$('<div>').text(chat.title.substring(0, 25) + (chat.title.length > 25 ? '...' : '')).html()}
                             </button>
                             <button
@@ -519,12 +548,11 @@
         });
     }
 
-    function viewChat(chatId) {
+    function viewChat(chatId, el) {
         showLoader('Загрузка чата...');
         $('#offcanvas-left, #offcanvas-right').removeClass('show');
 
         $.getJSON(`/api/chats/${chatId}`, function (chat) {
-            console.log(chat)
             const item = chat.content;
             const box = $('#chat-box');
             box.empty();
@@ -534,12 +562,18 @@
             });
 
             currentChatId = chatId;
+
+            // установить активный элемент в desktop-списке
+            $('#chat-list .chat-item').removeClass('active');
+            if (el) $(el).closest('.chat-item').addClass('active');
+
             hideLoader();
         }).fail(() => {
             alert('Ошибка загрузки чата');
             hideLoader();
         });
     }
+
 
     function uploadFiles(files) {
         if (files.length === 0) return;
@@ -577,6 +611,13 @@
         loadFiles();
 
         $('#upload-file-btn').click(() => $('#file-upload-input').click());
+
+        $('#prompt-input').on('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // чтобы не было перевода строки
+                $('#send-btn').click();
+            }
+        });
 
         $('#file-upload-input').on('change', function () {
             const files = Array.from(this.files);
@@ -643,6 +684,10 @@
             $('#chat-box').html('<div class="text-gray-400 text-sm text-center">Новый чат</div>');
             currentChatId = null;
             loadFiles();
+
+            // убираем активность у всех пунктов истории
+            $('#chat-list .chat-item').removeClass('active');
+            $('#chat-list-mobile .chat-item').removeClass('active'); // если хочешь и для мобилки
         });
     });
 

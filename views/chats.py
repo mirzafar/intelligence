@@ -91,7 +91,7 @@ class ChatHandler(BaseHandler):
 
             try:
                 upload_file = await ai_client.files.create(
-                    file=open(settings.get('root_dir', '') + '/static/uploadsfile_path' + file_path , 'rb'),
+                    file=open(settings.get('root_dir', '') + '/static/uploads/' + file_path , 'rb'),
                     purpose='assistants'
                 )
             except (Exception,) as er:

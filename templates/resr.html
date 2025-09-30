@@ -173,6 +173,10 @@
             </button>
         </div>
         <ul id="chat-list" class="space-y-2 text-sm text-gray-700"></ul>
+        <div class="mt-4">
+            <h2 class="text-sm font-semibold mb-2">Диаграммы</h2>
+            <ul id="diagram-list" class="space-y-2 text-sm text-gray-700"></ul>
+        </div>
     </aside>
 
     <!-- Центральная область -->
@@ -219,6 +223,10 @@
         <button id="close-left"><i class="fas fa-times"></i></button>
     </div>
     <ul id="chat-list-mobile" class="p-4 space-y-2 text-sm text-gray-700"></ul>
+    <div class="p-4 border-t">
+        <h2 class="text-sm font-semibold">Диаграммы</h2>
+        <ul id="diagram-list-mobile" class="p-2 space-y-2 text-sm text-gray-700"></ul>
+    </div>
 </div>
 
 <!-- Offcanvas справа -->
@@ -286,6 +294,9 @@
     <div class="glass diagram-d relative rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         <!-- TOPBAR -->
         <div class="flex items-center justify-end px-4 py-3 border-b border-white/30 bg-white/40 backdrop-blur-md space-x-4 text-lg text-gray-600">
+            <button id="save-diagram" class="hover:text-blue-500" title="Сохранить диаграмму">
+                <i class="fas fa-floppy-disk"></i>
+            </button>
             <button id="copy-code" class="hover:text-blue-500" title="Скопировать"><i class="fas fa-copy"></i></button>
             <button id="download-svg" class="hover:text-blue-500" title="Скачать SVG"><i
                     class="fas fa-file-arrow-down"></i></button>
@@ -304,6 +315,35 @@
         <!-- VIEW: редактор кода -->
         <textarea id="diagram-code"
                   class="hidden flex-1 min-h-0 w-full overflow-auto bg-gray-900 text-green-400 text-sm p-4 font-mono outline-none resize-none"></textarea>
+        <!-- PROMPT BAR -->
+        <div id="diagram-prompt" class="hidden shrink-0 border-t border-white/30 bg-white/50 backdrop-blur px-3 py-2">
+            <div class="flex items-end gap-2">
+    <textarea id="diagram-prompt-input"
+              rows="1"
+              placeholder="Напишите промпт для диаграммы…"
+              class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
+                <button id="diagram-prompt-send"
+                        class="px-4 py-2 rounded-lg text-sm shadow">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="save-diagram-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-80">
+        <input id="save-diagram-name"
+               type="text"
+               placeholder="Название диаграммы"
+               class="w-full border p-2 rounded mb-4 focus:ring-2 focus:ring-emerald-400"/>
+        <div class="flex justify-end gap-2">
+            <button onclick="closeSaveDiagramModal()"
+                    class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">Отмена
+            </button>
+            <button onclick="confirmSaveDiagram()"
+                    class="px-3 py-1 rounded bg-green-400 hover:bg-green-500 text-white text-sm">Сохранить
+            </button>
+        </div>
     </div>
 </div>
 
@@ -325,6 +365,7 @@
     function syncLists() {
         $('#chat-list-mobile').html($('#chat-list').html());
         $('#files-list-mobile').html($('#files-list').html());
+        $('#diagram-list-mobile').html($('#diagram-list').html());
     }
 
     // Обновляем мобильные версии при изменениях
@@ -341,6 +382,94 @@
     function showLoader(text = 'Загрузка...') {
         $('#loader-text').text(text);
         $('#loader').removeClass('hidden');
+    }
+
+    function openSaveDiagramModal() {
+        // автоподстановка имени
+        const dt = new Date();
+        const stamp = dt.toLocaleString();
+        $('#save-diagram-name').val(`Диаграмма ${stamp}`);
+        $('#save-diagram-modal').removeClass('hidden');
+        setTimeout(() => $('#save-diagram-name').focus(), 0);
+    }
+
+    function closeSaveDiagramModal() {
+        $('#save-diagram-modal').addClass('hidden');
+    }
+
+    async function confirmSaveDiagram() {
+        const name = ($('#save-diagram-name').val() || '').trim();
+        if (!name) {
+            showError('Введите название диаграммы');
+            return;
+        }
+        if (!currentDiagramId) {
+            showError('Нет кода диаграммы для сохранения');
+            return;
+        }
+
+        try {
+            showLoader('Сохраняю диаграмму...');
+            const res = await fetch('/api/diagrams', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                // отправляем и name, и title — сервер возьмёт нужное
+                body: JSON.stringify({title: name, ms_uuid: currentDiagramId})
+            });
+            if (!res.ok) {
+                const t = await res.text().catch(() => '');
+                throw new Error(t || `HTTP ${res.status}`);
+            }
+            closeSaveDiagramModal();
+            hideLoader();
+            showSuccess();
+
+            // обновим список диаграмм в левой панели
+            loadDiagrams();
+
+            // остаёмся в текущем режиме, но можно пересобрать визуал при желании:
+            // openDiagram(currentDiagramId);
+        } catch (e) {
+            hideLoader();
+            showError('Не удалось сохранить диаграмму');
+            console.error('save diagram error:', e);
+        }
+    }
+
+    $('#save-diagram').off().on('click', () => {
+        // если кода нет — предупредим
+        const code = isCodeView ? ($('#diagram-code').val() || '') : (currentDiagramCode || '');
+        if (!code) {
+            showError('Нет кода диаграммы');
+            return;
+        }
+        openSaveDiagramModal();
+    });
+
+    function loadDiagrams() {
+        $.getJSON('/api/diagrams', function (data) {
+            const list = $('#diagram-list');
+            list.empty();
+            const items = (data && data.items) ? data.items : [];
+            if (items.length === 0) {
+                list.append('<li class="text-gray-500 text-xs">Нет диаграмм</li>');
+                return;
+            }
+            items.forEach(d => {
+                const title = (d.title || 'Без названия');
+                const safe = $('<div>').text(title.substring(0, 30) + (title.length > 30 ? '…' : '')).html();
+                list.append(`
+        <li class="chat-item group flex items-center justify-between">
+          <button class="flex-1 text-left px-1.5 py-1 truncate text-xs"
+                  onclick="openDiagram('${d.ms_uuid}')">
+            ${safe}
+          </button>
+        </li>
+      `);
+            });
+        }).fail(() => {
+            console.warn('Ошибка загрузки списка диаграмм');
+        });
     }
 
     function hideLoader() {
@@ -696,11 +825,14 @@
         currentDiagramId = id;
         isCodeView = false;
         $('#diagram-modal').removeClass('hidden');
-        $('#diagram-content').removeClass('hidden').html('<div class="text-gray-500 text-center mt-10">Загрузка...</div>');
+        $('#diagram-prompt').addClass('hidden');
+        $('#diagram-content')
+            .removeClass('hidden')
+            .html('<div class="text-gray-500 text-center mt-10">Загрузка...</div>');
         $('#diagram-code').addClass('hidden');
 
         try {
-            const res = await fetch(`/api/diagrams/${currentChatId}/${id}`);
+            const res = await fetch(`/api/diagrams/${id}`);
             const data = await res.json();
 
             if (!data || !data.code) {
@@ -721,12 +853,52 @@
             }
 
             currentDiagramCode = data.code;
-            console.log(currentDiagramCode.length);
             await renderDiagram(currentDiagramCode);
-            bindToolbar(); // навесим обработчики на иконки
+            $('#diagram-prompt').removeClass('hidden'); // <— показать промпт
 
+            bindToolbar();
         } catch (err) {
             $('#diagram-content').html('<div class="text-red-500">Ошибка: ' + err.message + '</div>');
+        }
+    }
+
+    async function sendDiagramPrompt() {
+        const $inp = $('#diagram-prompt-input');
+        const prompt = ($inp.val() || '').trim();
+        if (!prompt) {
+            showError('Введите промпт');
+            return;
+        }
+        if (!currentDiagramId) {
+            showError('Нет активной диаграммы');
+            return;
+        }
+
+        try {
+            showLoader('Обновляю диаграмму...');
+            const res = await fetch(`/api/diagrams/${currentDiagramId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    prompt,
+                    action: 're-generate',
+                })
+            });
+
+            if (!res.ok) {
+                const t = await res.text().catch(() => '');
+                throw new Error(t || `HTTP ${res.status}`);
+            }
+
+            // очистим поле и перерисуем диаграмму
+            $inp.val('');
+            hideLoader();
+            openDiagram(currentDiagramId);
+            showSuccess();
+        } catch (err) {
+            hideLoader();
+            showError('Не удалось отправить промпт');
+            console.error('sendDiagramPrompt error:', err);
         }
     }
 
@@ -836,6 +1008,7 @@
             // режим: диаграмма
             $('#diagram-code').addClass('hidden');
             isCodeView = false;
+            $('#diagram-prompt').removeClass('hidden');
         } catch (err) {
             console.log(err);
             $('#diagram-content').html('<div class="text-red-500">Ошибка рендера</div>');
@@ -848,9 +1021,12 @@
             diagramPanZoom = null;
         }
         $(window).off('resize.diagram');
+
         $('#diagram-modal').addClass('hidden');
         $('#diagram-content').removeClass('hidden').empty();
         $('#diagram-code').addClass('hidden');
+        $('#diagram-prompt').addClass('hidden'); // <— спрятать при закрытии
+
         isCodeView = false;
         latestSVG = "";
     }
@@ -859,7 +1035,11 @@
     async function generateDiagram(id) {
         showLoader('Генерация...');
         try {
-            await fetch(`/api/diagrams/${currentChatId}/${id}`, {method: 'POST'})
+            await fetch(`/api/diagrams/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({chat_id: currentChatId})
+            })
                 .then(r => r.json())
                 .then(res => {
                     hideLoader();
@@ -882,7 +1062,10 @@
             await fetch(`/api/diagrams/${currentDiagramId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({code: currentDiagramCode})
+                body: JSON.stringify({
+                    action: 'edit-code',
+                    code: currentDiagramCode
+                })
             });
             // (опционально) лайтовый визуальный отклик можно сделать тут
         } catch (err) {
@@ -894,6 +1077,7 @@
     $(document).ready(function () {
         loadChatHistory();
         loadFiles();
+        loadDiagrams();
 
         $('#upload-file-btn').click(() => $('#file-upload-input').click());
 
@@ -915,6 +1099,10 @@
                 uploadFiles(files);
                 $(this).val('');
             }
+        });
+
+        $(document).on('click', '#diagram-prompt-send', function () {
+            sendDiagramPrompt();
         });
 
         $('#send-btn').click(async function () {

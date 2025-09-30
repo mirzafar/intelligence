@@ -5,11 +5,11 @@ import tornado.websocket
 
 
 class BaseHandler(tornado.web.RequestHandler):
-    def success(self, data: dict):
+    def success(self, data: dict = None):
         self.set_header('Content-Type', 'application/json')
         response = {
             '_success': True,
-            **data
+            **(data or {})
         }
         self.write(json.dumps(response, default=str))
 

@@ -1,58 +1,57 @@
-import os
-import traceback
-from datetime import datetime
-from urllib.parse import quote
-from uuid import uuid4
+import json
 
 from bson import ObjectId
-from pymongo import ReturnDocument
 
 from core.ai_client import ai_client
 from core.handlers import BaseHandler
-from core.utils import save_file
-from settings import settings
+from core.utils import StrUtils
 
 
 class DiagramsHandler(BaseHandler):
     async def get(self):
         filters = {
-            'is_active': True
+            'is_saved': True
         }
 
         items = await self.settings['db'].diagrams.find(filters).sort('_id', -1).to_list(length=None)
 
-        # self.success(data={'items': items})
         self.success(data={'items': [
-            {'_id': ObjectId(), 'title': 'test'}
+            {
+                'title': i['title'],
+                'ms_uuid': i['ms_uuid']
+            } for i in items
         ]})
 
     async def post(self):
-        # data = {
-        #     'title': file.filename,
-        #     'is_active': True,
-        #     'external_id': upload_file.id,
-        #     'file_path': file_path,
-        #     'created_at': datetime.now()
-        # }
-        #
-        # inserted = await self.settings['db'].files.insert_one(data)
-        #
-        # if not inserted.inserted_id:
-        #     return self.error(message='Операция не выполнена')
+        data = json.loads(self.request.body or '{}')
 
-        # self.success(data={'items': data})
-        self.success(data={})
+        title = StrUtils.to_str(data.get('title'))
+        ms_uuid = StrUtils.to_str(data.get('ms_uuid'))
+
+        if not (ms_uuid or title):
+            return self.error('Invalid request')
+
+        await self.settings['db'].diagrams.update_one({'ms_uuid': ms_uuid}, {'$set': {
+            'title': title,
+            'is_saved': True
+        }})
+
+        return self.success()
 
 
 class DiagramHandler(BaseHandler):
-    async def get(self, chat_id, ms_uuid):
+    async def get(self, ms_uuid):
         item = await self.settings['db'].diagrams.find_one({
             'ms_uuid': ms_uuid
         }) or {}
 
-        self.success(data={'code': item.get('code')})
+        return self.success(data={'code': item.get('code')})
 
-    async def post(self, chat_id, ms_uuid):
+    async def post(self, ms_uuid):
+        data = json.loads(self.request.body or '{}')
+
+        chat_id = StrUtils.to_str(data.get('chat_id'))
+
         if not (ObjectId.is_valid(chat_id) and ms_uuid):
             return self.error('Invalid request')
 
@@ -61,7 +60,7 @@ class DiagramHandler(BaseHandler):
         )
 
         if diagram:
-            return self.success(data={})
+            return self.success()
 
         chat = await self.settings['db'].chats.find_one(
             {'_id': ObjectId(chat_id)}
@@ -82,7 +81,7 @@ class DiagramHandler(BaseHandler):
             {
                 'role': 'system',
                 'content': 'You are an assistant that outputs ONLY raw flowchart code in Mermaid format. '
-                           'No explanations, no markdown, no backticks.'
+                           'No explanations, no markdown, no backticks. Use double quotes " around all node labels'
             },
             {'role': 'user', 'content': text}
         ]
@@ -95,9 +94,73 @@ class DiagramHandler(BaseHandler):
         content.append({'role': 'assistant', 'content': resp.output_text})
 
         await self.settings['db'].diagrams.insert_one({
+            'chat_id': chat_id,
             'ms_uuid': ms_uuid,
             'content': content,
             'code': resp.output_text
         })
 
-        return self.success(data={})
+        return self.success()
+
+    async def put(self, ms_uuid):
+        if not ms_uuid:
+            return self.error('Invalid request')
+
+        data = json.loads(self.request.body or '{}')
+
+        action = StrUtils.to_str(data.get('action'))
+        if action == 'edit-code':
+            code = StrUtils.to_str(data.get('code'))
+
+            if not code:
+                return self.error('Invalid request')
+
+            diagram = await self.settings['db'].diagrams.find_one(
+                {'ms_uuid': ms_uuid}
+            )
+
+            if not diagram:
+                return self.error(message='Diagram not found')
+
+            contents = list(reversed(diagram['content']))
+            for c in contents:
+                if c['role'] == 'assistant':
+                    c['content'] = code
+                    break
+
+            await self.settings['db'].diagrams.update_one({'ms_uuid': ms_uuid}, {'$set': {
+                'content': list(reversed(contents)),
+                'code': code
+            }})
+
+        elif action == 're-generate':
+            prompt = StrUtils.to_str(data.get('prompt'))
+
+            if not prompt:
+                return self.error('Invalid request')
+
+            diagram = await self.settings['db'].diagrams.find_one(
+                {'ms_uuid': ms_uuid}
+            )
+
+            if not diagram:
+                return self.error(message='Diagram not found')
+
+            content = diagram['content']
+            content.append({'role': 'user', 'content': prompt})
+
+            resp = await ai_client.responses.create(
+                model='gpt-4o-mini',
+                input=content
+            )
+
+            content.append({'role': 'assistant', 'content': resp.output_text})
+
+            await self.settings['db'].diagrams.update_one({'ms_uuid': ms_uuid}, {'$set': {
+                'content': content,
+                'code': resp.output_text
+            }})
+
+            return self.success(data={})
+
+        return self.error('Unknown action')

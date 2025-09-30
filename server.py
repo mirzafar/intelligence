@@ -6,6 +6,7 @@ import tornado.web
 import tornado.websocket
 
 from core.ai_client import ai_client
+from settings import settings as stg
 from views import (
     MainHandler,
     ChatsHandler,
@@ -17,7 +18,6 @@ from views import (
     DiagramsHandler,
     DiagramHandler
 )
-from settings import settings as stg
 
 
 def make_app():
@@ -41,7 +41,7 @@ def make_app():
         (r'/api/files/([a-fA-F0-9]{24})/download', FileDownloadHandler),
 
         (r'/api/diagrams', DiagramsHandler),
-        (r'/api/diagrams/([a-fA-F0-9]{24})/([a-fA-F0-9-]{36})', DiagramHandler),
+        (r'/api/diagrams/([a-fA-F0-9-]{36})', DiagramHandler),
 
     ], **settings, autoreload=True)
 

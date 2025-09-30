@@ -294,13 +294,14 @@
     <div class="glass diagram-d relative rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         <!-- TOPBAR -->
         <div class="flex items-center justify-end px-4 py-3 border-b border-white/30 bg-white/40 backdrop-blur-md space-x-4 text-lg text-gray-600">
-            <button id="save-diagram" class="hover:text-blue-500" title="Сохранить диаграмму">
+            <button id="save-diagram" class="hover:text-blue-500 hidden" title="Сохранить диаграмму">
                 <i class="fas fa-floppy-disk"></i>
             </button>
-            <button id="copy-code" class="hover:text-blue-500" title="Скопировать"><i class="fas fa-copy"></i></button>
-            <button id="download-svg" class="hover:text-blue-500" title="Скачать SVG"><i
+            <button id="copy-code" class="hover:text-blue-500 hidden" title="Скопировать"><i class="fas fa-copy"></i>
+            </button>
+            <button id="download-svg" class="hover:text-blue-500 hidden" title="Скачать SVG"><i
                     class="fas fa-file-arrow-down"></i></button>
-            <button id="toggle-code" class="hover:text-blue-500" title="Редактировать/Просмотр"><i
+            <button id="toggle-code" class="hover:text-blue-500 hidden" title="Редактировать/Просмотр"><i
                     class="fas fa-code"></i></button>
             <button onclick="closeDiagram()" class="hover:text-red-500 text-xl" title="Закрыть"><i
                     class="fas fa-xmark"></i></button>
@@ -854,7 +855,7 @@
 
             currentDiagramCode = data.code;
             await renderDiagram(currentDiagramCode);
-            $('#diagram-prompt').removeClass('hidden'); // <— показать промпт
+            $('#diagram-prompt, #toggle-code, #download-svg, #copy-code, #save-diagram').removeClass('hidden'); // <— показать промпт
 
             bindToolbar();
         } catch (err) {
@@ -1022,10 +1023,8 @@
         }
         $(window).off('resize.diagram');
 
-        $('#diagram-modal').addClass('hidden');
         $('#diagram-content').removeClass('hidden').empty();
-        $('#diagram-code').addClass('hidden');
-        $('#diagram-prompt').addClass('hidden'); // <— спрятать при закрытии
+        $('#toggle-code, #download-svg, #copy-code, #save-diagram, #diagram-modal, #diagram-code, #diagram-prompt').addClass('hidden'); // <— спрятать при закрытии
 
         isCodeView = false;
         latestSVG = "";

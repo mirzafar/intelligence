@@ -80,8 +80,9 @@ class DiagramHandler(BaseHandler):
         content = [
             {
                 'role': 'system',
-                'content': 'You are an assistant that outputs ONLY raw flowchart code in Mermaid format. '
-                           'No explanations, no markdown, no backticks. Use double quotes " around all node labels'
+                'content': 'You are an assistant that must return only Mermaid flowchart code as output. '
+                           'No JSON, no explanations, no markdown, no backticks. Use the structure `flowchart TD` '
+                           'and always put all node labels in double quotes `"`.'
             },
             {'role': 'user', 'content': text}
         ]

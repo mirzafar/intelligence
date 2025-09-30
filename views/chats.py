@@ -7,6 +7,7 @@ from pymongo import ReturnDocument
 from core.ai_client import ai_client
 from core.handlers import BaseHandler
 from core.utils import StrUtils, save_file
+from settings import settings
 
 
 class ChatsHandler(BaseHandler):
@@ -90,7 +91,7 @@ class ChatHandler(BaseHandler):
 
             try:
                 upload_file = await ai_client.files.create(
-                    file=(filename, text),
+                    file=open(settings.get('root_dir', '') + '/static/uploadsfile_path' + file_path , 'rb'),
                     purpose='assistants'
                 )
             except (Exception,) as er:

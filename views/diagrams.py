@@ -80,9 +80,7 @@ class DiagramHandler(BaseHandler):
         content = [
             {
                 'role': 'system',
-                'content': 'You are an assistant that must return only Mermaid flowchart code as output. '
-                           'No JSON, no explanations, no markdown, no backticks. Use the structure `flowchart TD` '
-                           'and always put all node labels in double quotes `"`.'
+                'content': 'You are an assistant that must output exactly one valid Mermaid flowchart code block. Do not include explanations, JSON, markdown, or backticks. The output must start with `flowchart TD` and contain only one flowchart definition. All node labels must be wrapped in double quotes `"`. Never return more than one `flowchart`.'
             },
             {'role': 'user', 'content': text}
         ]

@@ -110,6 +110,45 @@
             background: #94a3b8; /* ещё темнее при наведении активного */
         }
 
+        #diagram-modal {
+            z-index: 40 !important;
+        }
+
+        .diagram-d {
+            min-width: 60%;
+            min-height: 80%;
+            max-height: 90%;
+        }
+
+        #success-popup, #error-popup, #loader {
+            z-index: 50 !important;
+        }
+
+        #diagram-content svg,
+        #diagram-content .mermaid > svg {
+            display: block;
+            max-width: 100%;
+            height: auto; /* сохраняем пропорции */
+        }
+
+        /* (не обязательно) убираем внешние отступы, если mermaid их даёт */
+        #diagram-content svg {
+            margin: 0;
+        }
+
+        #diagram-content .svg-stage {
+            position: absolute;
+            inset: 0; /* top:0 right:0 bottom:0 left:0 */
+        }
+
+        /* сам SVG занимает 100% контейнера */
+        #diagram-content .svg-stage > svg {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: visible; /* чтобы большие элементы не обрезались */
+        }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2 md:p-4">
@@ -158,7 +197,7 @@
 
     <!-- Правая панель (desktop) -->
     <aside id="right-sidebar"
-           class="hidden lg:flex w-[220px] bg-white/60 backdrop-blur p-4 border-l scrollbar-thin overflow-y-auto flex-col">
+           class="hidden lg:flex w-1/6 bg-white/60 backdrop-blur p-4 border-l scrollbar-thin overflow-y-auto flex-col">
         <div class="flex justify-between items-center mb-3">
             <h2 class="text-sm font-semibold">Файлы</h2>
         </div>
@@ -243,6 +282,35 @@
     </div>
 </div>
 
+<div id="diagram-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-40 hidden">
+    <div class="glass diagram-d relative rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <!-- TOPBAR -->
+        <div class="flex items-center justify-end px-4 py-3 border-b border-white/30 bg-white/40 backdrop-blur-md space-x-4 text-lg text-gray-600">
+            <button id="copy-code" class="hover:text-blue-500" title="Скопировать"><i class="fas fa-copy"></i></button>
+            <button id="download-svg" class="hover:text-blue-500" title="Скачать SVG"><i
+                    class="fas fa-file-arrow-down"></i></button>
+            <button id="toggle-code" class="hover:text-blue-500" title="Редактировать/Просмотр"><i
+                    class="fas fa-code"></i></button>
+            <button onclick="closeDiagram()" class="hover:text-red-500 text-xl" title="Закрыть"><i
+                    class="fas fa-xmark"></i></button>
+        </div>
+
+        <!-- VIEW: диаграмма -->
+        <div id="diagram-content"
+             class="flex-1 relative p-0 overflow-hidden items-start justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+            <div class="text-gray-400 text-sm">Загрузка диаграммы...</div>
+        </div>
+
+        <!-- VIEW: редактор кода -->
+        <textarea id="diagram-code"
+                  class="hidden flex-1 min-h-0 w-full overflow-auto bg-gray-900 text-green-400 text-sm p-4 font-mono outline-none resize-none"></textarea>
+    </div>
+</div>
+
+<!-- mermaid (если ещё не подключен) -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script> mermaid.initialize({startOnLoad: false}); </script>
 
 <script>
     // Offcanvas toggle
@@ -265,6 +333,11 @@
     let currentChatId = null;
     let availableFiles = [];
 
+    let currentDiagramId = null;
+    let currentDiagramCode = "";
+    let isCodeView = false;          // <-- состояние вида
+    let latestSVG = "";              // <-- последняя отрисованная SVG
+
     function showLoader(text = 'Загрузка...') {
         $('#loader-text').text(text);
         $('#loader').removeClass('hidden');
@@ -275,6 +348,7 @@
     }
 
     function showSuccess() {
+        console.log('showSuccess')
         $('#success-popup').removeClass('hidden').fadeIn(200);
 
         setTimeout(() => {
@@ -328,16 +402,28 @@
             `;
         }
 
+        let diagramBtn = '';
+        if (!isUser) {
+            diagramBtn = `
+              <button onclick="openDiagram('${id}')"
+                      class="absolute top-1 right-8 text-gray-400 hover:text-indigo-600 transition"
+                      title="Построить диаграмму" aria-label="Построить диаграмму">
+                <i class="fas fa-project-diagram"></i>
+              </button>
+            `;
+        }
+
+
         const bubble = `
-      <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
-        <div id="${id}"
-             class="relative group max-w-[75%] px-3 py-2 text-sm whitespace-pre-wrap shadow-sm ${bubbleClass}"
-             ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
-          <div class="msg-text">${$('<div>').text(text).html()}</div>
-          ${redirectBtn}
-        </div>
-      </div>
-    `;
+          <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
+            <div id="${id}"
+                 class="relative group max-w-[75%] px-3 py-2 text-sm whitespace-pre-wrap shadow-sm ${bubbleClass}"
+                 ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
+              <div class="msg-text">${$('<div>').text(text).html()}</div>
+              ${redirectBtn} ${diagramBtn}
+            </div>
+          </div>
+        `;
 
         box.append(bubble);
         box.scrollTop(box[0].scrollHeight);
@@ -605,6 +691,205 @@
             }
         });
     }
+
+    async function openDiagram(id) {
+        currentDiagramId = id;
+        isCodeView = false;
+        $('#diagram-modal').removeClass('hidden');
+        $('#diagram-content').removeClass('hidden').html('<div class="text-gray-500 text-center mt-10">Загрузка...</div>');
+        $('#diagram-code').addClass('hidden');
+
+        try {
+            const res = await fetch(`/api/diagrams/${currentChatId}/${id}`);
+            const data = await res.json();
+
+            if (!data || !data.code) {
+                $('#diagram-content')
+                    .removeClass('p-6')        // убираем внутренние отступы, чтобы занять всё
+                    .addClass('p-0 relative')  // якорь для absolute
+                    .empty()
+                    .append(`
+                    <div id="diagram-empty"
+                         class="absolute inset-0 flex items-center justify-center">
+                      <button onclick="generateDiagram('${id}')"
+                              class="px-6 py-3 bg-teal-500 text-black rounded-lg shadow hover:bg-teal-700">
+                        <i class="fas fa-magic mr-2"></i> Генерировать диаграмму
+                      </button>
+                    </div>
+                  `);
+                return;
+            }
+
+            currentDiagramCode = data.code;
+            console.log(currentDiagramCode.length);
+            await renderDiagram(currentDiagramCode);
+            bindToolbar(); // навесим обработчики на иконки
+
+        } catch (err) {
+            $('#diagram-content').html('<div class="text-red-500">Ошибка: ' + err.message + '</div>');
+        }
+    }
+
+    function bindToolbar() {
+        // копировать код
+        $('#copy-code').off().on('click', () => {
+            navigator.clipboard.writeText(currentDiagramCode);
+            showSuccess();
+        });
+
+        // скачать svg (последний отрисованный)
+        $('#download-svg').off().on('click', () => {
+            if (!latestSVG) return;
+            const blob = new Blob([latestSVG], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'diagram.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // переключатель "редактор ⇄ диаграмма"
+        $('#toggle-code').off().on('click', async () => {
+            if (!isCodeView) {
+                if (diagramPanZoom) {
+                    diagramPanZoom.destroy();
+                    diagramPanZoom = null;
+                }
+                $(window).off('resize.diagram');
+                $('#diagram-content').addClass('hidden');
+                $('#diagram-code').removeClass('hidden').val(currentDiagramCode).focus();
+                isCodeView = true;
+            } else {
+                $('#diagram-content').removeClass('hidden');
+                await renderDiagram(currentDiagramCode);
+                isCodeView = false;
+            }
+        });
+    }
+
+    let diagramPanZoom = null; // если ещё не объявлен
+
+    async function renderDiagram(code) {
+        try {
+            const {svg} = await mermaid.render('generatedDiagram', code);
+
+            latestSVG = svg;
+            const $dc = $('#diagram-content');
+
+            // убираем плейсхолдер/кнопку, готовим сцену под полный размер
+            $dc.find('#diagram-empty').remove();
+            $dc.html('<div class="svg-stage"></div>');
+
+            // вставляем svg
+            const $stage = $dc.find('.svg-stage');
+            $stage.html(svg);
+
+            // на всякий случай: принудительно растянуть на весь контейнер
+            const svgEl = $stage.find('svg').get(0);
+            if (svgEl) {
+                svgEl.removeAttribute('width');
+                svgEl.removeAttribute('height');
+                svgEl.style.width = '100%';
+                svgEl.style.height = '100%';
+                svgEl.style.overflow = 'visible';
+                // если нет viewBox — попробуем выставить из bbox (редко нужно)
+                if (!svgEl.getAttribute('viewBox')) {
+                    const bb = svgEl.getBBox ? svgEl.getBBox() : null;
+                    if (bb) svgEl.setAttribute('viewBox', `${bb.x} ${bb.y} ${bb.width} ${bb.height}`);
+                }
+                svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            }
+
+            // пересоздаём pan/zoom (жесты: колесо/пинч/drag/даблклик)
+            if (diagramPanZoom) {
+                diagramPanZoom.destroy();
+                diagramPanZoom = null;
+            }
+            diagramPanZoom = svgPanZoom(svgEl, {
+                panEnabled: true,
+                zoomEnabled: true,
+                controlIconsEnabled: false,
+                fit: true,
+                center: true,
+                contain: true,            // стараться держать SVG в контейнере
+                minZoom: 0.2,
+                maxZoom: 10,
+                zoomScaleSensitivity: 0.2,
+                dblClickZoomEnabled: true,
+                mouseWheelZoomEnabled: true
+            });
+
+            // подогнать под контейнер
+            diagramPanZoom.resize();
+            diagramPanZoom.fit();
+            diagramPanZoom.center();
+
+            // ресайз окна → подгоняем
+            $(window).off('resize.diagram').on('resize.diagram', () => {
+                if (!diagramPanZoom) return;
+                diagramPanZoom.resize();
+                diagramPanZoom.fit();
+                diagramPanZoom.center();
+            });
+
+            // режим: диаграмма
+            $('#diagram-code').addClass('hidden');
+            isCodeView = false;
+        } catch (err) {
+            console.log(err);
+            $('#diagram-content').html('<div class="text-red-500">Ошибка рендера</div>');
+        }
+    }
+
+    function closeDiagram() {
+        if (diagramPanZoom) {
+            diagramPanZoom.destroy();
+            diagramPanZoom = null;
+        }
+        $(window).off('resize.diagram');
+        $('#diagram-modal').addClass('hidden');
+        $('#diagram-content').removeClass('hidden').empty();
+        $('#diagram-code').addClass('hidden');
+        isCodeView = false;
+        latestSVG = "";
+    }
+
+
+    async function generateDiagram(id) {
+        showLoader('Генерация...');
+        try {
+            await fetch(`/api/diagrams/${currentChatId}/${id}`, {method: 'POST'})
+                .then(r => r.json())
+                .then(res => {
+                    hideLoader();
+                    openDiagram(id);
+                })
+                .catch(err => {
+                    showError('Ошибка генерации');
+                    hideLoader();
+                });
+
+        } catch (err) {
+            hideLoader();
+            showError('Ошибка генерации');
+        }
+    }
+
+    $('#diagram-code').on('input', async function () {
+        currentDiagramCode = $(this).val();
+        try {
+            await fetch(`/api/diagrams/${currentDiagramId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: currentDiagramCode})
+            });
+            // (опционально) лайтовый визуальный отклик можно сделать тут
+        } catch (err) {
+            console.error('Ошибка сохранения', err);
+        }
+    });
+
 
     $(document).ready(function () {
         loadChatHistory();

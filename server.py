@@ -13,7 +13,9 @@ from views import (
     ChatHandler,
     FilesHandler,
     FileHandler,
-    FileDownloadHandler
+    FileDownloadHandler,
+    DiagramsHandler,
+    DiagramHandler
 )
 from settings import settings as stg
 
@@ -29,12 +31,18 @@ def make_app():
 
     return tornado.web.Application([
         (r'/', MainHandler),
+
         (r'/api/chats', ChatsHandler),
         (r'/api/chats/([a-fA-F0-9]{24})', ChatHandler),
         (r'/api/response', ResponseHandler),
+
         (r'/api/files', FilesHandler),
         (r'/api/files/([a-fA-F0-9]{24})', FileHandler),
         (r'/api/files/([a-fA-F0-9]{24})/download', FileDownloadHandler),
+
+        (r'/api/diagrams', DiagramsHandler),
+        (r'/api/diagrams/([a-fA-F0-9]{24})/([a-fA-F0-9-]{36})', DiagramHandler),
+
     ], **settings, autoreload=True)
 
 

@@ -567,9 +567,9 @@
         const bubble = `
           <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
             <div id="${id}"
-                 class="relative group max-w-[75%] px-3 py-2 text-sm whitespace-pre-wrap shadow-sm ${bubbleClass}"
+                 class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
                  ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
-              <div class="msg-text">${$('<div>').text(text).html()}</div>
+              <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
               ${redirectBtn} ${diagramBtn}
             </div>
           </div>
@@ -1162,7 +1162,7 @@
                     currentChatId = parsedData.chat_id;
 
                     $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
-                    $('#prompt-input').val('');
+                    $('#prompt-input').val('').css('height', 'auto');
                 }
                 appendMessage('assistant', assistantMessage, ms_uuid);
 

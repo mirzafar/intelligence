@@ -43,7 +43,7 @@ def make_app():
         (r'/api/diagrams', DiagramsHandler),
         (r'/api/diagrams/([a-fA-F0-9-]{36})', DiagramHandler),
 
-    ], **settings, autoreload=True)
+    ], **settings, autoreload=True, debug=True)
 
 
 if __name__ == '__main__':

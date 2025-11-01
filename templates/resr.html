@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" type="text/css" href="./assets/css/libs/bootstrap-icons.css">
 
     <style>
         body {
@@ -51,17 +51,12 @@
             transform: translateX(-100%);
         }
 
-        .offcanvas-right {
-            right: 0;
-            transform: translateX(100%);
-        }
-
         .offcanvas.show {
             transform: translateX(0);
         }
 
         .chat-box-h {
-            max-height: calc(100vh - 140px);
+            max-height: calc(100vh - 110px);
         }
 
         @keyframes popup-scale {
@@ -87,7 +82,7 @@
         }
 
         .assistant-bubble {
-            background: #f1f5f9; /* светло-серый */
+            background: #f1f5f9;
             color: #333;
             border-radius: 12px;
             padding: 8px 12px;
@@ -99,15 +94,15 @@
         }
 
         .chat-item:hover {
-            background: #e5e7eb; /* темнее при наведении */
+            background: #e5e7eb;
         }
 
         .chat-item.active {
-            background: #cbd5e1; /* заметно темнее для активного */
+            background: #cbd5e1;
         }
 
         .chat-item.active:hover {
-            background: #94a3b8; /* ещё темнее при наведении активного */
+            background: #94a3b8;
         }
 
         #diagram-modal {
@@ -118,24 +113,27 @@
             min-width: 60%;
             min-height: 80%;
             max-height: 90%;
+        }
 
-            /* Для планшетов */
-            @media (max-width: 1024px) {
+        @media (max-width: 1024px) {
+            .diagram-d {
                 min-width: 80%;
                 min-height: 90%;
             }
+        }
 
-            /* Для мобильных */
-            @media (max-width: 768px) {
+        @media (max-width: 768px) {
+            .diagram-d {
                 min-width: 90%;
                 min-height: 90%;
                 max-height: 90%;
             }
+        }
 
-            /* Для очень маленьких экранов */
-            @media (max-width: 480px) {
+        @media (max-width: 480px) {
+            .diagram-d {
                 min-width: 90%;
-                min-height: 90vh; /* На всю высоту viewport */
+                min-height: 90vh;
                 max-height: 90vh;
             }
         }
@@ -148,27 +146,111 @@
         #diagram-content .mermaid > svg {
             display: block;
             max-width: 100%;
-            height: auto; /* сохраняем пропорции */
+            height: auto;
         }
 
-        /* (не обязательно) убираем внешние отступы, если mermaid их даёт */
         #diagram-content svg {
             margin: 0;
         }
 
         #diagram-content .svg-stage {
             position: absolute;
-            inset: 0; /* top:0 right:0 bottom:0 left:0 */
+            inset: 0;
         }
 
-        /* сам SVG занимает 100% контейнера */
         #diagram-content .svg-stage > svg {
             display: block;
             width: 100% !important;
             height: 100% !important;
-            overflow: visible; /* чтобы большие элементы не обрезались */
+            overflow: visible;
         }
 
+        /* --- ТАБЫ ДЛЯ ЛЕВОЙ ПАНЕЛИ И МОБИЛЬНОГО OFFCANVAS --- */
+        .tabs {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100%;
+        }
+
+        .tab-controls {
+            display: grid;
+            grid-auto-flow: column;
+            gap: .25rem;
+            background: rgba(17, 24, 39, .04);
+            padding: .35rem;
+            border-radius: .75rem;
+            border: 1px solid rgba(0, 0, 0, .06);
+        }
+
+        .tab-controls label {
+            text-align: center;
+            font-size: .75rem;
+            padding: .5rem .6rem;
+            border-radius: .65rem;
+            cursor: pointer;
+            transition: all .15s ease;
+            color: #374151;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .tab-controls label:hover {
+            background: rgba(0, 0, 0, .05);
+        }
+
+        .tab-content {
+            position: relative;
+            overflow: hidden;
+            border-radius: .75rem;
+            margin-top: .5rem;
+            border: 1px solid rgba(0, 0, 0, .06);
+            background: #ffffffa8;
+        }
+
+        .tab-pane {
+            display: none;
+            height: calc(100% - 0px);
+            overflow: auto;
+            padding: .5rem;
+        }
+
+        .tab-radio {
+            display: none;
+        }
+
+        /* Активные вкладки — desktop */
+        #tab-chats:checked ~ .tab-controls label[for="tab-chats"],
+        #tab-diagrams:checked ~ .tab-controls label[for="tab-diagrams"],
+        #tab-files:checked ~ .tab-controls label[for="tab-files"] {
+            background: linear-gradient(135deg, #a7f3d0, #86efac);
+            color: #065f46;
+            box-shadow: inset 0 0 0 1px rgba(6, 95, 70, .2);
+        }
+
+        #tab-chats:checked ~ .tab-content .pane-chats,
+        #tab-diagrams:checked ~ .tab-content .pane-diagrams,
+        #tab-files:checked ~ .tab-content .pane-files {
+            display: block;
+        }
+
+        /* Активные вкладки — mobile (offcanvas-left) */
+        #mtab-chats:checked ~ .m-tab-controls label[for="mtab-chats"],
+        #mtab-diagrams:checked ~ .m-tab-controls label[for="mtab-diagrams"],
+        #mtab-files:checked ~ .m-tab-controls label[for="mtab-files"] {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        #mtab-chats:checked ~ .m-tab-content .m-pane-chats,
+        #mtab-diagrams:checked ~ .m-tab-content .m-pane-diagrams,
+        #mtab-files:checked ~ .m-tab-content .m-pane-files {
+            display: block;
+        }
+
+        /* Правую панель визуально скрываем (оставляем в DOM, чтобы не ломать JS) */
+        #right-sidebar {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2 md:p-4">
@@ -176,26 +258,71 @@
 <!-- Верхняя панель для мобилки -->
 <header class="flex items-center justify-between bg-white/70 backdrop-blur p-3 rounded-lg mb-2 shadow md:hidden">
     <button id="menu-left" class="text-emerald-600 text-xl"><i class="fas fa-bars"></i></button>
-    <h1 class="font-bold text-gray-700">AI Чат</h1>
-    <button id="menu-right" class="text-emerald-600 text-xl"><i class="fas fa-folder"></i></button>
 </header>
 
 <!-- Основной контейнер -->
 <div class="glass w-full flex-1 flex overflow-hidden">
 
-    <!-- Левая панель (desktop) -->
+    <!-- Левая панель (desktop) с вкладками -->
     <aside id="left-sidebar"
-           class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 border-r overflow-y-auto scrollbar-thin flex-col">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-sm font-semibold">История чатов</h2>
-            <button id="new-chat" class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500">+
-                Новый
-            </button>
-        </div>
-        <ul id="chat-list" class="space-y-2 text-sm text-gray-700"></ul>
-        <div class="mt-4">
-            <h2 class="text-sm font-semibold mb-2">Диаграммы</h2>
-            <ul id="diagram-list" class="space-y-2 text-sm text-gray-700"></ul>
+           class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 border-r overflow-hidden scrollbar-thin flex-col">
+        <div class="tabs">
+            <!-- radios -->
+            <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-chats" checked>
+            <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-diagrams">
+            <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-files">
+
+            <!-- controls -->
+            <div class="tab-controls mb-2">
+                <label for="tab-chats"><i class="fa-regular fa-comments mr-1"></i> Чаты</label>
+                <label for="tab-diagrams"><i class="fa-solid fa-diagram-project mr-1"></i> Диаграммы</label>
+                <label for="tab-files"><i class="fa-regular fa-folder-open mr-1"></i> Файлы</label>
+            </div>
+
+            <!-- panes -->
+            <div class="tab-content">
+                <!-- CHATS -->
+                <div class="tab-pane pane-chats">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-sm font-semibold"></h2>
+                        <button id="new-chat"
+                                class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500"
+                                title="Новый чать"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                      d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <ul id="chat-list" class="space-y-2 text-sm text-gray-700"></ul>
+                </div>
+
+                <!-- DIAGRAMS -->
+                <div class="tab-pane pane-diagrams">
+                    <ul id="diagram-list" class="space-y-2 text-sm text-gray-700"></ul>
+                </div>
+
+                <!-- FILES -->
+                <div class="tab-pane pane-files">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-sm font-semibold"></h2>
+                        <div class="mt-0">
+                            <input type="file" id="file-upload-input" multiple hidden/>
+                            <button id="upload-file-btn"
+                                    class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd"
+                                          d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="files-list" class="space-y-2 text-sm text-gray-700"></div>
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -209,53 +336,84 @@
         <!-- Ввод -->
         <div class="border-t p-3 bg-white/80 backdrop-blur">
             <div class="flex items-end gap-2">
-        <textarea id="prompt-input" rows="2" placeholder="Введите сообщение..."
-                  class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
-                <button id="send-btn"
-                        class="bg-cyan-400 px-4 py-2 rounded-lg text-sm shadow">
-                    <i class="fa-solid fa-paper-plane"></i>
+                <textarea id="prompt-input" rows="1" placeholder="Введите сообщение..."
+                          class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
+                <button id="send-btn" class="bg-cyan-400 px-4 py-2 rounded-lg text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         class="bi bi-send" viewBox="0 0 16 16">
+                        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                    </svg>
                 </button>
             </div>
         </div>
     </main>
 
-    <!-- Правая панель (desktop) -->
-    <aside id="right-sidebar"
-           class="hidden lg:flex w-1/6 bg-white/60 backdrop-blur p-4 border-l scrollbar-thin overflow-y-auto flex-col">
-        <div class="flex justify-between items-center mb-3">
-            <h2 class="text-sm font-semibold">Файлы</h2>
-        </div>
-        <div id="files-list" class="space-y-2 text-sm text-gray-700"></div>
-        <div class="mt-3">
-            <input type="file" id="file-upload-input" multiple hidden/>
-            <button id="upload-file-btn"
-                    class="w-full text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500">
-                <i class="fas fa-plus mr-1 text-[10px]"></i> Добавить
-            </button>
-        </div>
-    </aside>
+    <!-- Правая панель (desktop) — визуально скрыта, оставлена для совместимости -->
+    <!--    <aside id="right-sidebar"-->
+    <!--           class="hidden lg:flex w-1/6 bg-white/60 backdrop-blur p-4 border-l scrollbar-thin overflow-y-auto flex-col">-->
+    <!--        <div class="p-4 text-xs text-gray-500">-->
+    <!--            Перенесено во вкладки слева.-->
+    <!--        </div>-->
+    <!--    </aside>-->
 </div>
 
-<!-- Offcanvas слева -->
+<!-- Offcanvas слева (мобильный) с вкладками -->
 <div id="offcanvas-left" class="offcanvas offcanvas-left">
     <div class="p-4 border-b flex justify-between items-center">
-        <h2 class="text-sm font-semibold">История чатов</h2>
         <button id="close-left"><i class="fas fa-times"></i></button>
     </div>
-    <ul id="chat-list-mobile" class="p-4 space-y-2 text-sm text-gray-700"></ul>
-    <div class="p-4 border-t">
-        <h2 class="text-sm font-semibold">Диаграммы</h2>
-        <ul id="diagram-list-mobile" class="p-2 space-y-2 text-sm text-gray-700"></ul>
-    </div>
-</div>
 
-<!-- Offcanvas справа -->
-<div id="offcanvas-right" class="offcanvas offcanvas-right">
-    <div class="p-4 border-b flex justify-between items-center">
-        <h2 class="text-sm font-semibold">Файлы</h2>
-        <button id="close-right"><i class="fas fa-times"></i></button>
+    <!-- radios -->
+    <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-chats" checked>
+    <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-diagrams">
+    <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-files">
+
+    <!-- controls -->
+    <div class="m-tab-controls p-3 pt-4 grid grid-cols-3 gap-2">
+        <label for="mtab-chats" class="text-center text-xs px-2 py-2 rounded-lg border">Чаты</label>
+        <label for="mtab-diagrams" class="text-center text-xs px-2 py-2 rounded-lg border">Диаграммы</label>
+        <label for="mtab-files" class="text-center text-xs px-2 py-2 rounded-lg border">Файлы</label>
     </div>
-    <div id="files-list-mobile" class="p-4 space-y-2 text-sm text-gray-700"></div>
+
+    <!-- panes -->
+    <div class="m-tab-content px-3 pb-4">
+        <div class="m-pane-chats hidden">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-sm font-semibold"></h2>
+                <button id="new-chat-mobile"
+                        class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500"
+                        title="Новый чат">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         class="bi bi-plus-lg" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                              d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                    </svg>
+                </button>
+            </div>
+            <ul id="chat-list-mobile" class="space-y-2 text-sm text-gray-700"></ul>
+        </div>
+        <div class="m-pane-diagrams hidden">
+            <ul id="diagram-list-mobile" class="space-y-2 text-sm text-gray-700"></ul>
+        </div>
+        <div class="m-pane-files hidden">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-sm font-semibold"></h2>
+                <div>
+                    <button id="upload-file-btn-mobile"
+                            class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                             class="bi bi-plus-lg" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                  d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- список файлов (как и было) -->
+            <div id="files-list-mobile" class="space-y-2 text-sm text-gray-700"></div>
+        </div>
+    </div>
 </div>
 
 <!-- Лоадер -->
@@ -272,18 +430,14 @@
 
 <div id="redirect-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg w-80">
-        <input id="redirect-filename"
-               type="text"
-               placeholder="Введите название файла..."
+        <input id="redirect-filename" type="text" placeholder="Введите название файла..."
                class="w-full border p-2 rounded mb-4 focus:ring-2 focus:ring-emerald-400"/>
         <div class="flex justify-end gap-2">
-            <button onclick="closeRedirectModal()"
-                    class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">
+            <button onclick="closeRedirectModal()" class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">
                 Отмена
             </button>
             <button onclick="confirmRedirect()"
-                    class="px-3 py-1 rounded bg-green-400 hover:bg-green-500 text-white text-sm">
-                Подтвердить
+                    class="px-3 py-1 rounded bg-green-400 hover:bg-green-500 text-white text-sm">Подтвердить
             </button>
         </div>
     </div>
@@ -314,17 +468,54 @@
     <div class="glass diagram-d relative rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         <!-- TOPBAR -->
         <div class="flex items-center justify-end px-4 py-3 border-b border-white/30 bg-white/40 backdrop-blur-md space-x-4 text-lg text-gray-600">
+            <button id="view-diagram" class="hover:text-blue-500" title="Просмотр">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-diagram-2" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 5 7h2.5V6A1.5 1.5 0 0 1 6 4.5zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5zM3 11.5A1.5 1.5 0 0 1 4.5 10h1A1.5 1.5 0 0 1 7 11.5v1A1.5 1.5 0 0 1 5.5 14h-1A1.5 1.5 0 0 1 3 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 9 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/>
+                </svg>
+            </button>
+            <button id="open-miro" class="hover:text-blue-500" title="Открыть Miro">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-browser-firefox" viewBox="0 0 16 16">
+                    <path d="M13.384 3.408c.535.276 1.22 1.152 1.556 1.963a8 8 0 0 1 .503 3.897l-.009.077-.026.224A7.758 7.758 0 0 1 .006 8.257v-.04q.025-.545.114-1.082c.01-.074.075-.42.09-.489l.01-.051a6.6 6.6 0 0 1 1.041-2.35q.327-.465.725-.87.35-.358.758-.65a1.5 1.5 0 0 1 .26-.137c-.018.268-.04 1.553.268 1.943h.003a5.7 5.7 0 0 1 1.868-1.443 3.6 3.6 0 0 0 .021 1.896q.105.07.2.152c.107.09.226.207.454.433l.068.066.009.009a2 2 0 0 0 .213.18c.383.287.943.563 1.306.741.201.1.342.168.359.193l.004.008c-.012.193-.695.858-.933.858-2.206 0-2.564 1.335-2.564 1.335.087.997.714 1.839 1.517 2.357a4 4 0 0 0 .439.241q.114.05.228.094c.325.115.665.18 1.01.194 3.043.143 4.155-2.804 3.129-4.745v-.001a3 3 0 0 0-.731-.9 3 3 0 0 0-.571-.37l-.003-.002a2.68 2.68 0 0 1 1.87.454 3.92 3.92 0 0 0-3.396-1.983q-.116.001-.23.01l-.042.003V4.31h-.002a4 4 0 0 0-.8.14 7 7 0 0 0-.333-.314 2 2 0 0 0-.2-.152 4 4 0 0 1-.088-.383 5 5 0 0 1 1.352-.289l.05-.003c.052-.004.125-.01.205-.012C7.996 2.212 8.733.843 10.17.002l-.003.005.003-.001.002-.002h.002l.002-.002h.015a.02.02 0 0 1 .012.007 2.4 2.4 0 0 0 .206.48q.09.153.183.297c.49.774 1.023 1.379 1.543 1.968.771.874 1.512 1.715 2.036 3.02l-.001-.013a8 8 0 0 0-.786-2.353"/>
+                </svg>
+            </button>
             <button id="save-diagram" class="hover:text-blue-500 hidden" title="Сохранить диаграмму">
-                <i class="fas fa-floppy-disk"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-box-arrow-down" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1z"/>
+                    <path fill-rule="evenodd"
+                          d="M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708z"/>
+                </svg>
             </button>
-            <button id="copy-code" class="hover:text-blue-500 hidden" title="Скопировать"><i class="fas fa-copy"></i>
+            <button id="copy-code" class="hover:text-blue-500 hidden" title="Скопировать">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy"
+                     viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+                </svg>
             </button>
-            <button id="download-svg" class="hover:text-blue-500 hidden" title="Скачать SVG"><i
-                    class="fas fa-file-arrow-down"></i></button>
-            <button id="toggle-code" class="hover:text-blue-500 hidden" title="Редактировать/Просмотр"><i
-                    class="fas fa-code"></i></button>
-            <button onclick="closeDiagram()" class="hover:text-red-500 text-xl" title="Закрыть"><i
-                    class="fas fa-xmark"></i></button>
+            <button id="download-svg" class="hover:text-blue-500 hidden" title="Скачать SVG">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-filetype-svg" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M14 4.5V14a2 2 0 0 1-2 2v-1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM0 14.841a1.13 1.13 0 0 0 .401.823q.194.162.478.252.285.091.665.091.507 0 .858-.158.355-.158.54-.44a1.17 1.17 0 0 0 .187-.656q0-.336-.135-.56a1 1 0 0 0-.375-.357 2 2 0 0 0-.565-.21l-.621-.144a1 1 0 0 1-.405-.176.37.37 0 0 1-.143-.299q0-.234.184-.384.187-.152.513-.152.214 0 .37.068a.6.6 0 0 1 .245.181.56.56 0 0 1 .12.258h.75a1.1 1.1 0 0 0-.199-.566 1.2 1.2 0 0 0-.5-.41 1.8 1.8 0 0 0-.78-.152q-.44 0-.776.15-.337.149-.528.421-.19.273-.19.639 0 .302.123.524t.351.367q.229.143.54.213l.618.144q.31.073.462.193a.39.39 0 0 1 .153.326.5.5 0 0 1-.085.29.56.56 0 0 1-.256.193q-.167.07-.413.07-.176 0-.32-.04a.8.8 0 0 1-.248-.115.58.58 0 0 1-.255-.384zm4.575 1.09h.952l1.327-3.999h-.879l-.887 3.138H5.05l-.897-3.138h-.917zm5.483-3.293q.114.228.14.492h-.776a.8.8 0 0 0-.096-.249.7.7 0 0 0-.17-.19.7.7 0 0 0-.237-.126 1 1 0 0 0-.3-.044q-.427 0-.664.302-.235.3-.235.85v.497q0 .352.097.616a.9.9 0 0 0 .305.413.87.87 0 0 0 .518.146 1 1 0 0 0 .457-.097.67.67 0 0 0 .273-.263q.09-.164.09-.364v-.254h-.823v-.59h1.576v.798q0 .29-.096.55a1.3 1.3 0 0 1-.293.457 1.4 1.4 0 0 1-.495.314q-.296.111-.698.111a2 2 0 0 1-.752-.132 1.45 1.45 0 0 1-.534-.377 1.6 1.6 0 0 1-.319-.58 2.5 2.5 0 0 1-.105-.745v-.507q0-.54.199-.949.202-.406.583-.633.383-.228.926-.228.357 0 .635.1.282.1.48.275.2.176.314.407"/>
+                </svg>
+            </button>
+            <button id="view-code" class="hover:text-blue-500 hidden" title="Редактировать код">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-code-slash" viewBox="0 0 16 16">
+                    <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>
+                </svg>
+            </button>
+            <button onclick="closeDiagram()" class="hover:text-red-500 text-xl" title="Закрыть">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x"
+                     viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+            </button>
         </div>
 
         <!-- VIEW: диаграмма -->
@@ -339,27 +530,23 @@
         <!-- PROMPT BAR -->
         <div id="diagram-prompt" class="hidden shrink-0 border-t border-white/30 bg-white/50 backdrop-blur px-3 py-2">
             <div class="flex items-end gap-2">
-    <textarea id="diagram-prompt-input"
-              rows="1"
-              placeholder="Напишите промпт для диаграммы…"
-              class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
-                <button id="diagram-prompt-send"
-                        class="px-4 py-2 rounded-lg text-sm shadow">
+                <textarea id="diagram-prompt-input" rows="1" placeholder="Напишите промпт для диаграммы…"
+                          class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
+                <button id="diagram-prompt-send" class="px-4 py-2 rounded-lg text-sm">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
             </div>
         </div>
     </div>
 </div>
+
 <div id="save-diagram-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg w-80">
-        <input id="save-diagram-name"
-               type="text"
-               placeholder="Название диаграммы"
+        <input id="save-diagram-name" type="text" placeholder="Название диаграммы"
                class="w-full border p-2 rounded mb-4 focus:ring-2 focus:ring-emerald-400"/>
         <div class="flex justify-end gap-2">
-            <button onclick="closeSaveDiagramModal()"
-                    class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">Отмена
+            <button onclick="closeSaveDiagramModal()" class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">
+                Отмена
             </button>
             <button onclick="confirmSaveDiagram()"
                     class="px-3 py-1 rounded bg-green-400 hover:bg-green-500 text-white text-sm">Сохранить
@@ -368,7 +555,7 @@
     </div>
 </div>
 
-<!-- mermaid (если ещё не подключен) -->
+<!-- mermaid и zpp -->
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 <script> mermaid.initialize({startOnLoad: false}); </script>
@@ -378,18 +565,13 @@
     $('#menu-left').click(() => $('#offcanvas-left').addClass('show'));
     $('#close-left, #chat-box').click(() => $('#offcanvas-left').removeClass('show'));
 
-    $('#menu-right').click(() => $('#offcanvas-right').addClass('show'));
-    $('#close-right, #chat-box').click(() => $('#offcanvas-right').removeClass('show'));
-
-
-    // Пример синхронизации файлов и чатов между desktop и mobile
+    // Синхронизация списков между desktop и mobile
     function syncLists() {
         $('#chat-list-mobile').html($('#chat-list').html());
         $('#files-list-mobile').html($('#files-list').html());
         $('#diagram-list-mobile').html($('#diagram-list').html());
     }
 
-    // Обновляем мобильные версии при изменениях
     setInterval(syncLists, 1000);
 
     let currentChatId = null;
@@ -397,8 +579,32 @@
 
     let currentDiagramId = null;
     let currentDiagramCode = "";
-    let isCodeView = false;          // <-- состояние вида
-    let latestSVG = "";              // <-- последняя отрисованная SVG
+    let isCodeView = false;
+    let latestSVG = "";
+    let isMiroOpen = false;
+
+    function toMiroEmbedUrl(raw) {
+        try {
+            const u = new URL(raw);
+            // Если это обычная ссылка вида /app/board/{id}/... -> заменим на /app/live-embed/{id}/...
+            if (u.pathname.includes('/app/board/')) {
+                u.pathname = u.pathname.replace('/app/board/', '/app/live-embed/');
+                return u.href;
+            }
+            // Если уже live-embed — оставляем как есть
+            if (u.pathname.includes('/app/live-embed/')) {
+                return u.href;
+            }
+            // Фолбэк: попробуем собрать live-embed из последнего сегмента пути
+            const segs = u.pathname.split('/').filter(Boolean);
+            const last = segs[segs.length - 1] || '';
+            u.pathname = `/app/live-embed/${last}/`;
+            return u.href;
+        } catch (e) {
+            // Если URL не распарсился — вернем, как есть (вдруг уже корректная embed-ссылка)
+            return raw;
+        }
+    }
 
     function showLoader(text = 'Загрузка...') {
         $('#loader-text').text(text);
@@ -406,7 +612,6 @@
     }
 
     function openSaveDiagramModal() {
-        // автоподстановка имени
         const dt = new Date();
         const stamp = dt.toLocaleString();
         $('#save-diagram-name').val(`Диаграмма ${stamp}`);
@@ -434,7 +639,6 @@
             const res = await fetch('/api/diagrams', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                // отправляем и name, и title — сервер возьмёт нужное
                 body: JSON.stringify({title: name, ms_uuid: currentDiagramId})
             });
             if (!res.ok) {
@@ -444,12 +648,7 @@
             closeSaveDiagramModal();
             hideLoader();
             showSuccess();
-
-            // обновим список диаграмм в левой панели
             loadDiagrams();
-
-            // остаёмся в текущем режиме, но можно пересобрать визуал при желании:
-            // openDiagram(currentDiagramId);
         } catch (e) {
             hideLoader();
             showError('Не удалось сохранить диаграмму');
@@ -458,7 +657,6 @@
     }
 
     $('#save-diagram').off().on('click', () => {
-        // если кода нет — предупредим
         const code = isCodeView ? ($('#diagram-code').val() || '') : (currentDiagramCode || '');
         if (!code) {
             showError('Нет кода диаграммы');
@@ -485,8 +683,7 @@
                   onclick="openDiagram('${d.ms_uuid}')">
             ${safe}
           </button>
-        </li>
-      `);
+        </li>`);
             });
         }).fail(() => {
             console.warn('Ошибка загрузки списка диаграмм');
@@ -498,49 +695,34 @@
     }
 
     function showSuccess() {
-        console.log('showSuccess')
         $('#success-popup').removeClass('hidden').fadeIn(200);
-
         setTimeout(() => {
-            $('#success-popup').fadeOut(300, () => {
-                $('#success-popup').addClass('hidden');
-            });
+            $('#success-popup').fadeOut(300, () => $('#success-popup').addClass('hidden'));
         }, 1500);
     }
 
     function showError(text = 'Ошибка') {
         $('#error-text').text(text);
         $('#error-popup').removeClass('hidden').fadeIn(200);
-
         setTimeout(() => {
-            $('#error-popup').fadeOut(300, () => {
-                $('#error-popup').addClass('hidden');
-            });
+            $('#error-popup').fadeOut(300, () => $('#error-popup').addClass('hidden'));
         }, 2000);
     }
-
 
     function generateUUID() {
         return crypto.randomUUID();
     }
 
+    function escapeHtml(s = '') {
+        return $('<div>').text(s).html();
+    }
+
     function appendMessage(role, text, messageId = null) {
         const box = $('#chat-box');
         const id = messageId || 'msg-' + Date.now();
-
         const isUser = role === 'user';
+        const bubbleClass = isUser ? 'user-bubble self-end' : 'assistant-bubble self-start';
 
-        // Telegram colors
-        const bubbleClass = isUser
-            ? 'user-bubble self-end'
-            : 'assistant-bubble self-start';
-        // const userStyle = "background:#03a9f438; color:#1a1a1a; border-radius: 12px 12px 12px 12px;";
-        // const assistantStyle = "background:#ffffff; color:#1a1a1a; border:1px solid #e5e7eb; border-radius: 12px 12px 12px 12px;";
-
-        // Определяем стиль пузыря
-        // const bubbleStyle = isUser ? userStyle : assistantStyle;
-
-        // Кнопка redirect только для ассистента
         let redirectBtn = '';
         if (!isUser) {
             redirectBtn = `
@@ -548,8 +730,7 @@
                       class="absolute top-1 right-2 text-gray-400 hover:text-emerald-600 transition"
                       title="Сохранить в базу" aria-label="Сохранить в базу">
                 <i class="fas fa-download"></i>
-              </button>
-            `;
+              </button>`;
         }
 
         let diagramBtn = '';
@@ -559,10 +740,8 @@
                       class="absolute top-1 right-8 text-gray-400 hover:text-indigo-600 transition"
                       title="Построить диаграмму" aria-label="Построить диаграмму">
                 <i class="fas fa-project-diagram"></i>
-              </button>
-            `;
+              </button>`;
         }
-
 
         const bubble = `
           <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
@@ -572,13 +751,11 @@
               <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
               ${redirectBtn} ${diagramBtn}
             </div>
-          </div>
-        `;
+          </div>`;
 
         box.append(bubble);
         box.scrollTop(box[0].scrollHeight);
     }
-
 
     function editMessage(id) {
         const el = $('#' + id).find('.msg-text');
@@ -586,7 +763,6 @@
             .addClass('outline-none rounded-md p-2 bg-white')
             .focus();
 
-        // курсор в конец
         const range = document.createRange();
         const sel = window.getSelection();
         range.selectNodeContents(el[0]);
@@ -594,30 +770,22 @@
         sel.removeAllRanges();
         sel.addRange(range);
 
-        // при потере фокуса → автосохранение
         el.off('blur').on('blur', function () {
             saveMessage(id);
         });
-
-        // при Enter → сохранить сразу
         el.off('keydown').on('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();   // блокируем перевод строки
-                saveMessage(id);      // сохраняем
-                el.blur();            // снимаем редактирование
+                e.preventDefault();
+                saveMessage(id);
+                el.blur();
             }
-            // если Shift+Enter → просто оставить стандартное поведение (новая строка)
         });
-
     }
-
 
     function saveMessage(id) {
         const el = $('#' + id).find('.msg-text');
         const newText = el.text().trim();
-
-        el.removeAttr('contenteditable')
-            .removeClass('border border-emerald-400 rounded-md p-2 bg-white');
+        el.removeAttr('contenteditable').removeClass('border border-emerald-400 rounded-md p-2 bg-white');
 
         fetch(`/api/chats/${currentChatId}`, {
             method: 'PUT',
@@ -636,7 +804,7 @@
                     showError('');
                 }
             })
-            .catch(err => {
+            .catch(() => {
                 showError('Ошибка');
             });
     }
@@ -645,19 +813,13 @@
         const el = $('#' + id).find('.msg-text');
         const text = el.text().trim();
         showLoader();
-
         fetch(`/api/chats/${currentChatId}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                messageId: id,
-                action: 'redirect',
-                text,
-                filename
-            })
+            body: JSON.stringify({messageId: id, action: 'redirect', text, filename})
         })
             .then(r => r.json())
-            .then(res => {
+            .then(() => {
                 showSuccess();
                 hideLoader();
                 loadFiles();
@@ -668,13 +830,11 @@
             });
     }
 
-
     function loadChatHistory() {
         showLoader('Загрузка истории...');
         $.getJSON('/api/chats', function (data) {
             const chatList = $('#chat-list');
             chatList.empty();
-
             const items = data.items;
             if (items.length === 0) {
                 chatList.append('<li class="text-gray-500 text-center py-1 text-xs">Нет истории чатов</li>');
@@ -692,8 +852,7 @@
                             >
                                 <i class="fas fa-trash-alt text-[10px]"></i>
                             </button>
-                        </li>
-                    `);
+                        </li>`);
                 });
             }
             hideLoader();
@@ -709,7 +868,6 @@
             const filesList = $('#files-list');
             filesList.empty();
             availableFiles = data.items || [];
-
             if (availableFiles.length === 0) {
                 filesList.append('<div class="text-gray-500 text-center py-1 text-xs">Нет файлов</div>');
             } else {
@@ -724,8 +882,7 @@
                                     <i class="fas fa-trash-alt text-[10px]"></i>
                                 </button>
                             </div>
-                        </div>
-                    `);
+                        </div>`);
                 });
             }
             hideLoader();
@@ -737,9 +894,7 @@
 
     function deleteFile(fileId, button) {
         if (!confirm('Удалить этот файл?')) return;
-
         $(button).prop('disabled', true).html('<i class="fas fa-spinner fa-spin text-[10px]"></i>');
-
         $.ajax({
             url: `/api/files/${fileId}`,
             type: 'DELETE',
@@ -760,9 +915,7 @@
 
     function deleteChat(chatId, button) {
         if (!confirm('Удалить этот чат?')) return;
-
         $(button).prop('disabled', true).html('<i class="fas fa-spinner fa-spin text-[10px]"></i>');
-
         $.ajax({
             url: `/api/chats/${chatId}`,
             type: 'DELETE',
@@ -786,8 +939,7 @@
 
     function viewChat(chatId, el) {
         showLoader('Загрузка чата...');
-        $('#offcanvas-left, #offcanvas-right').removeClass('show');
-
+        $('#offcanvas-left').removeClass('show');
         $.getJSON(`/api/chats/${chatId}`, function (chat) {
             const item = chat.content;
             const box = $('#chat-box');
@@ -796,13 +948,9 @@
                 if (item.role === 'user') appendMessage('user', item.text);
                 if (item.role === 'assistant') appendMessage('assistant', item.text, item.ms_uuid);
             });
-
             currentChatId = chatId;
-
-            // установить активный элемент в desktop-списке
             $('#chat-list .chat-item').removeClass('active');
             if (el) $(el).closest('.chat-item').addClass('active');
-
             hideLoader();
         }).fail(() => {
             alert('Ошибка загрузки чата');
@@ -810,17 +958,13 @@
         });
     }
 
-
     function uploadFiles(files) {
         if (files.length === 0) return;
-
         showLoader('Загрузка файлов...');
         const formData = new FormData();
-
         for (let i = 0; i < files.length; i++) {
             formData.append('files', files[i]);
         }
-
         $.ajax({
             url: '/api/files',
             type: 'POST',
@@ -847,36 +991,25 @@
         isCodeView = false;
         $('#diagram-modal').removeClass('hidden');
         $('#diagram-prompt').addClass('hidden');
-        $('#diagram-content')
-            .removeClass('hidden')
-            .html('<div class="text-gray-500 text-center mt-10">Загрузка...</div>');
+        $('#diagram-content').removeClass('hidden').html('<div class="text-gray-500 text-center mt-10">Загрузка...</div>');
         $('#diagram-code').addClass('hidden');
 
         try {
             const res = await fetch(`/api/diagrams/${id}`);
             const data = await res.json();
-
             if (!data || !data.code) {
-                $('#diagram-content')
-                    .removeClass('p-6')        // убираем внутренние отступы, чтобы занять всё
-                    .addClass('p-0 relative')  // якорь для absolute
-                    .empty()
-                    .append(`
-                    <div id="diagram-empty"
-                         class="absolute inset-0 flex items-center justify-center">
+                $('#diagram-content').removeClass('p-6').addClass('p-0 relative').empty().append(`
+                    <div id="diagram-empty" class="absolute inset-0 flex items-center justify-center">
                       <button onclick="generateDiagram('${id}')"
                               class="px-6 py-3 bg-teal-500 text-black rounded-lg shadow hover:bg-teal-700">
                         <i class="fas fa-magic mr-2"></i> Генерировать диаграмму
                       </button>
-                    </div>
-                  `);
+                    </div>`);
                 return;
             }
-
             currentDiagramCode = data.code;
             await renderDiagram(currentDiagramCode);
-            $('#diagram-prompt, #toggle-code, #download-svg, #copy-code, #save-diagram').removeClass('hidden'); // <— показать промпт
-
+            $('#diagram-prompt, #view-code, #download-svg, #copy-code, #save-diagram').removeClass('hidden');
             bindToolbar();
         } catch (err) {
             $('#diagram-content').html('<div class="text-red-500">Ошибка: ' + err.message + '</div>');
@@ -894,24 +1027,17 @@
             showError('Нет активной диаграммы');
             return;
         }
-
         try {
             showLoader('Обновляю диаграмму...');
             const res = await fetch(`/api/diagrams/${currentDiagramId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    prompt,
-                    action: 're-generate',
-                })
+                body: JSON.stringify({prompt, action: 're-generate'})
             });
-
             if (!res.ok) {
                 const t = await res.text().catch(() => '');
                 throw new Error(t || `HTTP ${res.status}`);
             }
-
-            // очистим поле и перерисуем диаграмму
             $inp.val('');
             hideLoader();
             openDiagram(currentDiagramId);
@@ -924,13 +1050,10 @@
     }
 
     function bindToolbar() {
-        // копировать код
         $('#copy-code').off().on('click', () => {
             navigator.clipboard.writeText(currentDiagramCode);
             showSuccess();
         });
-
-        // скачать svg (последний отрисованный)
         $('#download-svg').off().on('click', () => {
             if (!latestSVG) return;
             const blob = new Blob([latestSVG], {type: 'image/svg+xml'});
@@ -941,44 +1064,36 @@
             a.click();
             URL.revokeObjectURL(url);
         });
-
-        // переключатель "редактор ⇄ диаграмма"
-        $('#toggle-code').off().on('click', async () => {
-            if (!isCodeView) {
-                if (diagramPanZoom) {
-                    diagramPanZoom.destroy();
-                    diagramPanZoom = null;
-                }
-                $(window).off('resize.diagram');
-                $('#diagram-content').addClass('hidden');
-                $('#diagram-code').removeClass('hidden').val(currentDiagramCode).focus();
-                isCodeView = true;
-            } else {
-                $('#diagram-content').removeClass('hidden');
-                await renderDiagram(currentDiagramCode);
-                isCodeView = false;
+        $('#view-code').off().on('click', async () => {
+            if (diagramPanZoom) {
+                diagramPanZoom.destroy();
+                diagramPanZoom = null;
             }
+            $(window).off('resize.diagram');
+            $('#diagram-content').addClass('hidden');
+            $('#diagram-code').removeClass('hidden').val(currentDiagramCode).focus();
+            isCodeView = true;
+        });
+
+        $('#view-diagram').off().on('click', async () => {
+            $('#diagram-content').removeClass('hidden');
+            await renderDiagram(currentDiagramCode);
+            isCodeView = false;
         });
     }
 
-    let diagramPanZoom = null; // если ещё не объявлен
+    let diagramPanZoom = null;
 
     async function renderDiagram(code) {
         try {
             const {svg} = await mermaid.render('generatedDiagram', code);
-
             latestSVG = svg;
             const $dc = $('#diagram-content');
-
-            // убираем плейсхолдер/кнопку, готовим сцену под полный размер
             $dc.find('#diagram-empty').remove();
             $dc.html('<div class="svg-stage"></div>');
-
-            // вставляем svg
             const $stage = $dc.find('.svg-stage');
             $stage.html(svg);
 
-            // на всякий случай: принудительно растянуть на весь контейнер
             const svgEl = $stage.find('svg').get(0);
             if (svgEl) {
                 svgEl.removeAttribute('width');
@@ -986,7 +1101,6 @@
                 svgEl.style.width = '100%';
                 svgEl.style.height = '100%';
                 svgEl.style.overflow = 'visible';
-                // если нет viewBox — попробуем выставить из bbox (редко нужно)
                 if (!svgEl.getAttribute('viewBox')) {
                     const bb = svgEl.getBBox ? svgEl.getBBox() : null;
                     if (bb) svgEl.setAttribute('viewBox', `${bb.x} ${bb.y} ${bb.width} ${bb.height}`);
@@ -994,31 +1108,19 @@
                 svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
             }
 
-            // пересоздаём pan/zoom (жесты: колесо/пинч/drag/даблклик)
             if (diagramPanZoom) {
                 diagramPanZoom.destroy();
                 diagramPanZoom = null;
             }
             diagramPanZoom = svgPanZoom(svgEl, {
-                panEnabled: true,
-                zoomEnabled: true,
-                controlIconsEnabled: false,
-                fit: true,
-                center: true,
-                contain: true,            // стараться держать SVG в контейнере
-                minZoom: 0.2,
-                maxZoom: 10,
-                zoomScaleSensitivity: 0.2,
-                dblClickZoomEnabled: true,
-                mouseWheelZoomEnabled: true
+                panEnabled: true, zoomEnabled: true, controlIconsEnabled: false,
+                fit: true, center: true, contain: true,
+                minZoom: 0.2, maxZoom: 10, zoomScaleSensitivity: 0.2,
+                dblClickZoomEnabled: true, mouseWheelZoomEnabled: true
             });
-
-            // подогнать под контейнер
             diagramPanZoom.resize();
             diagramPanZoom.fit();
             diagramPanZoom.center();
-
-            // ресайз окна → подгоняем
             $(window).off('resize.diagram').on('resize.diagram', () => {
                 if (!diagramPanZoom) return;
                 diagramPanZoom.resize();
@@ -1026,7 +1128,6 @@
                 diagramPanZoom.center();
             });
 
-            // режим: диаграмма
             $('#diagram-code').addClass('hidden');
             isCodeView = false;
             $('#diagram-prompt').removeClass('hidden');
@@ -1042,14 +1143,11 @@
             diagramPanZoom = null;
         }
         $(window).off('resize.diagram');
-
         $('#diagram-content').removeClass('hidden').empty();
-        $('#toggle-code, #download-svg, #copy-code, #save-diagram, #diagram-modal, #diagram-code, #diagram-prompt').addClass('hidden'); // <— спрятать при закрытии
-
+        $('#view-code, #download-svg, #copy-code, #save-diagram, #diagram-modal, #diagram-code, #diagram-prompt, #view-diagram').addClass('hidden');
         isCodeView = false;
         latestSVG = "";
     }
-
 
     async function generateDiagram(id) {
         showLoader('Генерация...');
@@ -1060,15 +1158,14 @@
                 body: JSON.stringify({chat_id: currentChatId})
             })
                 .then(r => r.json())
-                .then(res => {
+                .then(() => {
                     hideLoader();
                     openDiagram(id);
                 })
-                .catch(err => {
+                .catch(() => {
                     showError('Ошибка генерации');
                     hideLoader();
                 });
-
         } catch (err) {
             hideLoader();
             showError('Ошибка генерации');
@@ -1081,17 +1178,12 @@
             await fetch(`/api/diagrams/${currentDiagramId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: 'edit-code',
-                    code: currentDiagramCode
-                })
+                body: JSON.stringify({action: 'edit-code', code: currentDiagramCode})
             });
-            // (опционально) лайтовый визуальный отклик можно сделать тут
         } catch (err) {
             console.error('Ошибка сохранения', err);
         }
     });
-
 
     $(document).ready(function () {
         loadChatHistory();
@@ -1102,14 +1194,14 @@
 
         $('#prompt-input').on('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault(); // чтобы не было перевода строки
+                e.preventDefault();
                 $('#send-btn').click();
             }
         });
 
         $('#prompt-input').off('input').on('input', function () {
-            this.style.height = 'auto';          // сброс
-            this.style.height = this.scrollHeight + 'px'; // новая высота
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
         });
 
         $('#file-upload-input').on('change', function () {
@@ -1127,7 +1219,6 @@
         $('#send-btn').click(async function () {
             const prompt = $('#prompt-input').val().trim();
             if (!prompt) return alert('Введите сообщение');
-
             let ms_uuid = generateUUID();
 
             appendMessage('user', prompt);
@@ -1136,11 +1227,7 @@
             try {
                 const response = await fetch('/api/response', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        chat_id: currentChatId,
-                        ms_uuid: ms_uuid
-                    })
+                    body: JSON.stringify({prompt: prompt, chat_id: currentChatId, ms_uuid: ms_uuid})
                 });
 
                 if (!response.ok) throw new Error(`Ошибка ${response.status}`);
@@ -1153,20 +1240,14 @@
                 while (true) {
                     const {done, value} = await reader.read();
                     if (done) break;
-
                     const chunk = decoder.decode(value, {stream: true});
                     const parsedData = JSON.parse(chunk);
-
-                    console.log('chunk:', parsedData);
                     assistantMessage += parsedData.text;
                     currentChatId = parsedData.chat_id;
-
                     $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
                     $('#prompt-input').val('').css('height', 'auto');
                 }
                 appendMessage('assistant', assistantMessage, ms_uuid);
-
-
             } catch (error) {
                 appendMessage('assistant', `Ошибка: ${error.message}`);
             } finally {
@@ -1175,24 +1256,67 @@
             }
         });
 
-
         $('#new-chat').click(function () {
             $('#attached-files').empty();
-            $('#chat-box').html('<div class="text-gray-400 text-sm text-center">Новый чат</div>');
+            $('#chat-box').html('<div class="text-gray-400 text-sm text-center">✨ Новый чат</div>');
             currentChatId = null;
             loadFiles();
-
-            // убираем активность у всех пунктов истории
             $('#chat-list .chat-item').removeClass('active');
-            $('#chat-list-mobile .chat-item').removeClass('active'); // если хочешь и для мобилки
+            $('#chat-list-mobile .chat-item').removeClass('active');
+        });
+
+        $('#open-miro').off().on('click', async function (e) {
+            e.preventDefault();
+
+            const $dc = $('#diagram-content');
+
+            // Закрываем pan/zoom у мермейда, чтобы он не мешал iframe
+            if (window.diagramPanZoom) {
+                try {
+                    window.diagramPanZoom.destroy();
+                } catch (_) {
+                }
+                window.diagramPanZoom = null;
+            }
+
+            console.log('currentDiagramId', currentDiagramId)
+
+            let boardUrl = (localStorage.getItem(`miroBoardUrl-${currentDiagramId}`) || '').trim();
+            if (!boardUrl) {
+                boardUrl = prompt('Вставьте ссылку на доску Miro') || '';
+                boardUrl = boardUrl.trim();
+                if (!boardUrl) return; // пользователь отменил
+                localStorage.setItem(`miroBoardUrl-${currentDiagramId}`, boardUrl);
+            }
+            const embedUrl = toMiroEmbedUrl(boardUrl);
+
+            // Рендерим iframe во весь контейнер
+            $('#diagram-prompt').addClass('hidden');
+            $dc.removeClass('p-6') // на всякий
+                .addClass('relative') // у тебя уже стоит, но дублирование не вредно
+                .empty()
+                .append(
+                    `<iframe class="miro-embed absolute inset-0 w-full h-full"
+                       src="${embedUrl}"
+                       frameborder="0"
+                       allow="fullscreen; clipboard-read; clipboard-write"></iframe>`
+                );
+
+            isMiroOpen = true;
+        });
+        $('#upload-file-btn, #upload-file-btn-mobile').click(() => $('#file-upload-input').click());
+
+        $('#new-chat-mobile').click(() => {
+            $('#new-chat').click();
+            $('#offcanvas-left').removeClass('show'); // по желанию — закрыть меню
         });
     });
 
-    let redirectMessageId = null; // временно хранит ID сообщения
+    let redirectMessageId = null;
 
     function openRedirectModal(id) {
         redirectMessageId = id;
-        $('#redirect-filename').val(''); // очистка поля
+        $('#redirect-filename').val('');
         $('#redirect-modal').removeClass('hidden');
         $('#redirect-filename').focus();
     }
@@ -1209,8 +1333,6 @@
             return;
         }
         $('#redirect-modal').addClass('hidden');
-
-        // вызываем redirectMessage с именем файла
         redirectMessage(redirectMessageId, filename);
         redirectMessageId = null;
     }

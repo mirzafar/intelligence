@@ -41,8 +41,10 @@ class BaseStreamHandler(tornado.web.RequestHandler):
     def json(self):
         return json.loads(self.request.body or '{}')
 
-    def dispatch_data(self, data: dict):
-        return self.write(json.dumps(data, ensure_ascii=False))
+    async def dispatch_data(self, data: dict):
+        self.write(json.dumps(data, ensure_ascii=False))
+        return await self.flush()
 
-    def dispatch_error(self, text: str = 'Error'):
-        return self.write(text)
+    async def dispatch_error(self, text: str = 'Error'):
+        self.write(text)
+        return await self.flush()

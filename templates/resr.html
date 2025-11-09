@@ -1341,25 +1341,23 @@
     async function generateDesign(messageId) {
         try {
             showLoader('Генерирую дизайн...');
-            const res = await fetch(`/api/designs/${messageId}`, {
+            const response = await fetch(`/api/designs/${messageId}`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    chat_id: currentChatId
-                })
+                body: JSON.stringify({chat_id: currentChatId})
             });
 
-            const data = await res.json().catch(() => ({}));
-            hideLoader();
+            if (!response.ok) throw new Error(`Ошибка ${response.status}`);
+            if (!response.body) throw new Error('Поток не поддерживается');
 
-            if (data && data._success) {
-                showDesignCanvas(data.content);
-                showSuccess();
-            } else {
-                // если сервер прислал message — покажем его как ошибку
-                showError((data && data.message) ? data.message : 'Не удалось сгенерировать дизайн');
+            const reader = response.body.getReader();
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
             }
-        } catch (e) {
+            hideLoader();
+            await openDesign(messageId);
+        } catch (error) {
             hideLoader();
             showError('Ошибка: ' + e.message);
         }

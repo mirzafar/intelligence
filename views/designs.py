@@ -1,7 +1,7 @@
 from bson import ObjectId
 
 from core.ai_client import ai_client
-from core.handlers import BaseHandler
+from core.handlers import BaseStreamHandler
 from core.utils import StrUtils
 
 __system_message__ = '''
@@ -68,7 +68,7 @@ export class PayByPhoneService { ... }
 '''
 
 
-class DesignsHandler(BaseHandler):
+class DesignsHandler(BaseStreamHandler):
     async def get(self, ms_uuid):
         item = await self.settings['db'].designs.find_one({
             'ms_uuid': ms_uuid
@@ -77,17 +77,13 @@ class DesignsHandler(BaseHandler):
         return self.success(data={'content': item.get('content')})
 
     async def post(self, ms_uuid):
-        item = await self.settings['db'].designs.find_one({
-            'ms_uuid': ms_uuid
-        }) or {}
-
-        if item:
-            return self.success(data={'content': item['content']})
+        self.set_street_headers()
 
         chat_id = StrUtils.to_str(self.json.get('chat_id'))
 
         if not (ObjectId.is_valid(chat_id) and ms_uuid):
-            return self.error('Invalid request')
+            self.dispatch_error('Invalid request')
+            return await self.flush()
 
         chat = await self.settings['db'].chats.find_one(
             {'_id': ObjectId(chat_id)}
@@ -99,7 +95,8 @@ class DesignsHandler(BaseHandler):
                 text = c['content']
 
         if not text:
-            return self.error('Message not found')
+            self.dispatch_error('Message not found')
+            return await self.flush()
 
         inputs = []
 
@@ -125,4 +122,5 @@ class DesignsHandler(BaseHandler):
             'content': resp.output_text
         }}, upsert=True)
 
-        return self.success(data={'content': resp.output_text})
+        self.dispatch_data({'content': resp.output_text})
+        return await self.flush()

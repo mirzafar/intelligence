@@ -3,7 +3,6 @@ import uuid
 from typing import Optional
 
 import aiofiles
-from docx import Document
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.styles import getSampleStyleSheet
@@ -17,7 +16,7 @@ from settings import settings
 class StrUtils:
     @staticmethod
     def to_str(value):
-        return str(value) if value is not None else ""
+        return str(value) if value is not None else ''
 
 
 class ListUtils:

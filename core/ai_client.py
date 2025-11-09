@@ -9,7 +9,7 @@ from settings import settings
 class AiClient:
     client = None
 
-    def initialize(self):
+    def __init__(self):
         self.client = AsyncOpenAI(
             api_key=settings['ai_api_key']
         )

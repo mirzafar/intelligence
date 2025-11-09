@@ -5,7 +5,6 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 
-from core.ai_client import ai_client
 from settings import settings as stg
 from views import (
     MainHandler,
@@ -16,13 +15,13 @@ from views import (
     FileHandler,
     FileDownloadHandler,
     DiagramsHandler,
-    DiagramHandler
+    DiagramHandler,
+    DesignsHandler
 )
 
 
 def make_app():
     client = motor.motor_tornado.MotorClient(stg['mongo']['db_url'])
-    ai_client.initialize()
     settings = {
         'static_path': os.path.join(os.path.dirname(__file__), 'static'),
         'template_path': os.path.join(os.path.dirname(__file__), 'templates'),
@@ -42,6 +41,8 @@ def make_app():
 
         (r'/api/diagrams', DiagramsHandler),
         (r'/api/diagrams/([a-fA-F0-9-]{36})', DiagramHandler),
+
+        (r'/api/designs/([a-fA-F0-9-]{36})', DesignsHandler),
 
     ], **settings, autoreload=True, debug=True)
 

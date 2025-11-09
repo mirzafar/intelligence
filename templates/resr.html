@@ -139,7 +139,7 @@
         }
 
         #success-popup, #error-popup, #loader {
-            z-index: 60 !important;
+            z-index: 100 !important;
         }
 
         #diagram-content svg,
@@ -794,6 +794,16 @@
               </button>`;
         }
 
+        let designBtn = '';
+        if (!isUser) {
+            designBtn = `
+            <button onclick="openDesign('${id}')"
+                    class="absolute top-1 right-14 text-gray-400 hover:text-fuchsia-600 transition"
+                    title="Сгенерировать дизайн" aria-label="Сгенерировать дизайн">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>`;
+        }
+
         let diagramBtn = '';
         if (!isUser) {
             diagramBtn = `
@@ -805,18 +815,19 @@
         }
 
         const bubble = `
-          <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
-            <div id="${id}"
-                 class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
-                 ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
-              <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
-              ${redirectBtn} ${diagramBtn}
-            </div>
-          </div>`;
+            <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
+              <div id="${id}"
+                   class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
+                   ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
+                <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
+                ${redirectBtn} ${diagramBtn} ${designBtn}
+              </div>
+            </div>`;
 
         box.append(bubble);
         box.scrollTop(box[0].scrollHeight);
     }
+
 
     function editMessage(id) {
         const el = $('#' + id).find('.msg-text');
@@ -1210,6 +1221,46 @@
         latestSVG = "";
     }
 
+    // Плейсхолдер в модалке, если дизайна ещё нет
+    function showDesignPlaceholder(messageId) {
+        ensureDesignCanvas();
+        $('#design-modal-content').html(`
+        <div class="flex flex-col items-center justify-center py-6 text-center">
+          <div class="text-gray-600 mb-3">Для этого сообщения дизайн ещё не создан.</div>
+          <button id="design-generate-btn"
+                  class="px-4 py-2 rounded-lg">
+            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Сгенерировать
+          </button>
+        </div>
+      `);
+        $('#design-modal').removeClass('hidden');
+
+        // Привязываем клик к генерации
+        $('#design-generate-btn').off('click').on('click', () => generateDesign(messageId));
+    }
+
+    // Открытие дизайна: сначала GET /api/designs/${messageId}
+    async function openDesign(messageId) {
+        try {
+            showLoader('Открываю дизайн...');
+            const res = await fetch(`/api/designs/${messageId}`, {method: 'GET'});
+            const data = await res.json().catch(() => ({}));
+            hideLoader();
+
+            if (data && data.content) {
+                // Если есть готовый контент — показываем сразу
+                showDesignCanvas(data.content);
+            } else {
+                // Иначе — плейсхолдер с кнопкой "Сгенерировать"
+                showDesignPlaceholder(messageId);
+            }
+        } catch (e) {
+            hideLoader();
+            showError('Ошибка открытия дизайна: ' + e.message);
+        }
+    }
+
+
     async function generateDiagram(id) {
         showLoader('Генерация...');
         try {
@@ -1232,6 +1283,91 @@
             showError('Ошибка генерации');
         }
     }
+
+    // Создаём (один раз) отдельный "canvas" блок под чат, чтобы показывать результат дизайна
+    // ЦЕНТРИРОВАННЫЙ МОДАЛ ДЛЯ ДИЗАЙНА
+    function ensureDesignCanvas() {
+        let $m = $('#design-modal');
+        if ($m.length === 0) {
+            $('body').append(`
+      <div id="design-modal"
+           class="fixed inset-0 bg-black/50 flex items-center justify-center hidden"
+           style="z-index:60">
+        <div class="glass bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-5 relative"
+             style="max-height:85vh; overflow:auto;">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-semibold">Дизайн</h3>
+            <div class="flex gap-2">
+              <button id="design-copy" class="text-gray-500 hover:text-emerald-600" title="Скопировать">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+              <button id="design-close" class="text-gray-500 hover:text-red-500" title="Закрыть">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <div id="design-modal-content" class="text-sm whitespace-pre-wrap"></div>
+        </div>
+      </div>
+    `);
+
+            // Обработчики — один раз
+            $(document).on('click', '#design-close', () => $('#design-modal').addClass('hidden'));
+            $(document).on('click', '#design-modal', (e) => {
+                if (e.target.id === 'design-modal') $('#design-modal').addClass('hidden'); // клик по подложке
+            });
+            $(document).on('click', '#design-copy', () => {
+                const t = $('#design-modal-content').text();
+                navigator.clipboard.writeText(t);
+                showSuccess();
+            });
+            $(document).on('keydown', (e) => {
+                if (!$('#design-modal').hasClass('hidden') && e.key === 'Escape') {
+                    $('#design-modal').addClass('hidden');
+                }
+            });
+
+            $m = $('#design-modal');
+        }
+        return $m;
+    }
+
+    function showDesignCanvas(message) {
+        ensureDesignCanvas();
+        // .text() — безопасно. Если сервер гарантирует безопасный HTML — смените на .html(message).
+        $('#design-modal-content').text(message || '');
+        $('#design-modal').removeClass('hidden');
+    }
+
+
+    // Основная функция для кнопки "Сгенерировать дизайн"
+    async function generateDesign(messageId) {
+        try {
+            showLoader('Генерирую дизайн...');
+            const res = await fetch(`/api/designs/${messageId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    chat_id: currentChatId
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            hideLoader();
+
+            if (data && data._success) {
+                showDesignCanvas(data.content);
+                showSuccess();
+            } else {
+                // если сервер прислал message — покажем его как ошибку
+                showError((data && data.message) ? data.message : 'Не удалось сгенерировать дизайн');
+            }
+        } catch (e) {
+            hideLoader();
+            showError('Ошибка: ' + e.message);
+        }
+    }
+
 
     $('#diagram-code').on('input', async function () {
         currentDiagramCode = $(this).val();

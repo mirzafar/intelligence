@@ -1,156 +1,258 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>AI Чат</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
-
+  <meta charset="utf-8" />
+  <title>Чередование: длинный → 10с</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      background: linear-gradient(135deg, #d9f7ff, #eaf3ff, #ffffff);
-      font-family: 'Inter', sans-serif;
-    }
+    :root { color-scheme: dark; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100svh; background:#0b1220; color:#e5e7eb; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; display:grid; grid-template-rows: 1fr auto; }
+    /* Вся «сцена» — большой отсчёт и название интервала */
+    .stage { display:grid; place-items:center; text-align:center; padding:24px; }
+    .left { font-size: clamp(56px, 12vw, 160px); line-height:1; font-weight:800; letter-spacing:0.02em; font-variant-numeric:tabular-nums; }
+    .leg  { margin-top:14px; font-size: clamp(18px, 3.2vw, 36px); opacity:.9; }
+    .led  { width:14px; height:14px; border-radius:50%; background:#374151; display:inline-block; margin-left:10px; vertical-align:middle; box-shadow:0 0 0 0 rgba(16,185,129,0); }
+    .led.on { background:#10b981; animation:pulse .9s ease-out; }
+    @keyframes pulse { from { box-shadow:0 0 0 0 rgba(16,185,129,.7);} to { box-shadow:0 0 0 20px rgba(16,185,129,0);} }
 
-    .glass {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 1rem;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    }
-
-    .scrollbar-thin::-webkit-scrollbar {
-      width: 6px;
-    }
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.2);
-      border-radius: 4px;
-    }
-
-    /* Offcanvas */
-    .offcanvas {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      width: 75%;
-      max-width: 280px;
-      background: #fff;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.25);
-      transition: transform 0.3s ease-in-out;
-      z-index: 50;
-    }
-    .offcanvas-left { left: 0; transform: translateX(-100%); }
-    .offcanvas-right { right: 0; transform: translateX(100%); }
-    .offcanvas.show { transform: translateX(0); }
+    /* Панель управления внизу */
+    .controls { background:#0f172a; border-top:1px solid #1f2937; padding:12px 14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; }
+    button { appearance:none; border:0; padding:12px 16px; border-radius:12px; font-weight:700; cursor:pointer; }
+    #start { background:#10b981; color:#05291f; }
+    #stop  { background:#ef4444; color:#3b0a0a; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .field { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#0b1324; border:1px solid #1f2937; border-radius:12px; }
+    .field input[type="number"] { width:84px; padding:6px 10px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e5e7eb; font-weight:700; }
+    .k { color:#9ca3af; font-size:14px; }
+    input[type="range"] { width:140px; }
+    label.switch { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#0b1324; border:1px solid #1f2937; border-radius:12px; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col p-2 md:p-4">
-
-<!-- Верхняя панель для мобилки -->
-<header class="flex items-center justify-between bg-white/70 backdrop-blur p-3 rounded-lg mb-2 shadow md:hidden">
-  <button id="menu-left" class="text-emerald-600 text-xl"><i class="fas fa-bars"></i></button>
-  <h1 class="font-bold text-gray-700">AI Чат</h1>
-  <button id="menu-right" class="text-emerald-600 text-xl"><i class="fas fa-folder"></i></button>
-</header>
-
-<!-- Основной контейнер -->
-<div class="glass w-full flex-1 flex overflow-hidden">
-
-  <!-- Левая панель (desktop) -->
-  <aside id="left-sidebar"
-         class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 border-r overflow-y-auto scrollbar-thin flex-col">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-sm font-semibold">История чатов</h2>
-      <button id="new-chat" class="text-xs bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 rounded-md">+ Новый</button>
-    </div>
-    <ul id="chat-list" class="space-y-2 text-sm text-gray-700"></ul>
-  </aside>
-
-  <!-- Центральная область -->
-  <main class="flex-1 flex flex-col">
-    <!-- Сообщения -->
-    <div id="chat-box" class="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 scrollbar-thin">
-      <div class="text-gray-400 text-sm text-center">✨ Новый чат</div>
-    </div>
-
-    <!-- Ввод -->
-    <div class="border-t p-3 bg-white/80 backdrop-blur">
-      <div class="flex items-end gap-2">
-        <textarea id="prompt-input" rows="2" placeholder="Введите сообщение..."
-                  class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
-        <button id="send-btn"
-                class="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm shadow">
-          <i class="fas fa-paper-plane"></i>
-        </button>
-      </div>
-    </div>
+<body>
+  <main class="stage">
+    <div class="left" id="left">—</div>
+    <div class="leg" id="leg">— <span class="led" id="led"></span></div>
   </main>
 
-  <!-- Правая панель (desktop) -->
-  <aside id="right-sidebar"
-         class="hidden lg:flex w-[220px] bg-white/60 backdrop-blur p-4 border-l scrollbar-thin overflow-y-auto flex-col">
-    <div class="flex justify-between items-center mb-3">
-      <h2 class="text-sm font-semibold">Файлы</h2>
+  <footer class="controls">
+    <button id="start">Старт</button>
+    <button id="stop" disabled>Стоп</button>
+
+    <div class="field">
+      <span class="k">Длинный интервал (сек):</span>
+      <input id="longSec" type="number" min="5" max="600" step="1" value="30" />
     </div>
-    <div id="files-list" class="space-y-2 text-sm text-gray-700"></div>
-    <div class="mt-3">
-      <input type="file" id="file-upload-input" multiple hidden/>
-      <button id="upload-file-btn"
-              class="w-full text-xs bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-2 rounded-md">
-        <i class="fas fa-plus mr-1 text-[10px]"></i> Добавить
-      </button>
-    </div>
-  </aside>
-</div>
 
-<!-- Offcanvas слева -->
-<div id="offcanvas-left" class="offcanvas offcanvas-left">
-  <div class="p-4 border-b flex justify-between items-center">
-    <h2 class="text-sm font-semibold">История чатов</h2>
-    <button id="close-left"><i class="fas fa-times"></i></button>
-  </div>
-  <ul id="chat-list-mobile" class="p-4 space-y-2 text-sm text-gray-700"></ul>
-</div>
+    <label class="field">
+      <span class="k">Громкость</span>
+      <input id="vol" type="range" min="0" max="150" value="100" />
+    </label>
 
-<!-- Offcanvas справа -->
-<div id="offcanvas-right" class="offcanvas offcanvas-right">
-  <div class="p-4 border-b flex justify-between items-center">
-    <h2 class="text-sm font-semibold">Файлы</h2>
-    <button id="close-right"><i class="fas fa-times"></i></button>
-  </div>
-  <div id="files-list-mobile" class="p-4 space-y-2 text-sm text-gray-700"></div>
-</div>
+    <label class="switch">
+      <input id="boost" type="checkbox" checked />
+      <span class="k">Усиление +</span>
+    </label>
 
-<!-- Лоадер -->
-<div id="loader" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
-  <div class="flex items-center space-x-2 text-white">
-    <svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-    </svg>
-    <span id="loader-text" class="text-sm">Загрузка...</span>
-  </div>
-</div>
+    <button id="test" title="Проверить звук">Тест-бип</button>
+  </footer>
 
-<script>
-  // Offcanvas toggle
-  $('#menu-left').click(() => $('#offcanvas-left').addClass('show'));
-  $('#close-left').click(() => $('#offcanvas-left').removeClass('show'));
+  <script>
+    // ===== Аудио (громкий, «проникающий») =====
+    let ctx=null, preGain=null, compressor=null, masterGain=null;
 
-  $('#menu-right').click(() => $('#offcanvas-right').addClass('show'));
-  $('#close-right').click(() => $('#offcanvas-right').removeClass('show'));
+    function ensureAudio(){
+      if(!ctx){
+        const AC = window.AudioContext || window.webkitAudioContext;
+        ctx = new AC();
+        preGain = ctx.createGain();
 
-  // Пример синхронизации файлов и чатов между desktop и mobile
-  function syncLists() {
-    $('#chat-list-mobile').html($('#chat-list').html());
-    $('#files-list-mobile').html($('#files-list').html());
-  }
+        compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-28, ctx.currentTime);
+        compressor.knee.setValueAtTime(24, ctx.currentTime);
+        compressor.ratio.setValueAtTime(12, ctx.currentTime);
+        compressor.attack.setValueAtTime(0.002, ctx.currentTime);
+        compressor.release.setValueAtTime(0.15, ctx.currentTime);
 
-  // Обновляем мобильные версии при изменениях
-  setInterval(syncLists, 1000);
-</script>
+        masterGain = ctx.createGain();
+        masterGain.gain.value = 1.0;
+
+        preGain.connect(compressor).connect(masterGain).connect(ctx.destination);
+
+        applyVolumeFromUI();
+        applyBoostFromUI();
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+    }
+
+    function applyVolumeFromUI(){
+      if(!preGain) return;
+      const v = document.getElementById('vol').value;
+      const gain = Math.min(2.5, v/60);
+      preGain.gain.setTargetAtTime(gain, ctx.currentTime, 0.01);
+    }
+    function applyBoostFromUI(){
+      if(!compressor) return;
+      const on = document.getElementById('boost').checked;
+      if(on){
+        compressor.threshold.setValueAtTime(-30, ctx.currentTime);
+        compressor.knee.setValueAtTime(26, ctx.currentTime);
+        compressor.ratio.setValueAtTime(14, ctx.currentTime);
+        compressor.attack.setValueAtTime(0.0015, ctx.currentTime);
+        compressor.release.setValueAtTime(0.12, ctx.currentTime);
+      }else{
+        compressor.threshold.setValueAtTime(-18, ctx.currentTime);
+        compressor.knee.setValueAtTime(20, ctx.currentTime);
+        compressor.ratio.setValueAtTime(8, ctx.currentTime);
+        compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+        compressor.release.setValueAtTime(0.20, ctx.currentTime);
+      }
+    }
+
+    function beepPattern(kindSec){
+      const led = document.getElementById('led');
+      led.classList.remove('on'); void led.offsetWidth; led.classList.add('on');
+
+      const isLong = (kindSec !== 10); // длинный интервал против короткого (10с)
+      const reps = isLong ? 3 : 2;
+      const base = isLong ? 1200 : 2400;
+      const dur  = isLong ? 150  : 130;
+      const gap  = 80;
+
+      for(let i=0;i<reps;i++){
+        const t = ctx.currentTime + i*(dur+gap)/1000;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(base, t);
+        osc.frequency.linearRampToValueAtTime(base*1.12, t + dur/1000);
+
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(1.0, t+0.008);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+dur/1000);
+
+        osc.connect(g).connect(preGain);
+        osc.start(t);
+        osc.stop(t + dur/1000);
+      }
+    }
+
+    // ===== Логика: длинный → 10 → длинный → … =====
+    let running=false;
+    const shortSec = 10;
+    let longSec = 30;
+
+    let nextLegType = 'long';   // 'long' | 'short'
+    let currentLegType = null;  // что сейчас идёт
+    let legStartTs = null;      // ms, начало текущей ноги
+    let legLenSec = null;       // длина текущей ноги (в секундах зафиксирована на старте ноги)
+    let targetTs = null;        // когда прозвучит сигнал (ms)
+    let timeoutId = null;
+    let tickId = null;
+
+    function scheduleNext(){
+      if(!running) return;
+      const now = Date.now();
+
+      currentLegType = nextLegType;
+      legLenSec = (currentLegType==='long' ? longSec : shortSec);
+      legStartTs = now;
+      targetTs = legStartTs + legLenSec*1000;
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(()=>{
+        beepPattern(legLenSec);
+        nextLegType = (currentLegType==='long') ? 'short' : 'long';
+        scheduleNext();
+      }, legLenSec*1000);
+
+      updateLegLabel();
+    }
+
+    function start(){
+      if(running) return;
+      ensureAudio();
+      running = true;
+      nextLegType = 'long';
+      scheduleNext();
+      startUI();
+      document.getElementById('start').disabled = true;
+      document.getElementById('stop').disabled = false;
+    }
+    function stop(){
+      running = false;
+      clearTimeout(timeoutId);
+      stopUI();
+      document.getElementById('start').disabled = false;
+      document.getElementById('stop').disabled = true;
+      document.getElementById('left').textContent = '—';
+      document.getElementById('leg').textContent  = '—';
+    }
+
+    // Пересчёт, если меняют «длинный интервал» во время длинной ноги
+    function maybeAdjustCurrentLeg(){
+      const inputVal = Math.max(5, Math.min(600, Number(document.getElementById('longSec').value || 30)));
+      longSec = inputVal;
+
+      if(!running) return;
+      if(currentLegType !== 'long') return;
+
+      const now = Date.now();
+      const newTarget = legStartTs + longSec*1000;
+      const remaining = Math.max(0, newTarget - now);
+
+      clearTimeout(timeoutId);
+      targetTs = newTarget;
+      timeoutId = setTimeout(()=>{
+        beepPattern(longSec);
+        nextLegType = 'short';
+        scheduleNext();
+      }, remaining);
+
+      updateLegLabel();
+    }
+
+    // ===== UI =====
+    function fmtLeft(ms){
+      ms = Math.max(0, ms);
+      const s = Math.ceil(ms/1000);
+      const m = Math.floor(s/60);
+      const r = s % 60;
+      return (m ? `${m}м ` : '') + `${r}с`;
+    }
+    function startUI(){
+      clearInterval(tickId);
+      tickId = setInterval(()=>{
+        if(running && targetTs){
+          const leftMs = targetTs - Date.now();
+          document.getElementById('left').textContent = fmtLeft(leftMs);
+        }
+      }, 150);
+      updateLegLabel();
+    }
+    function stopUI(){ clearInterval(tickId); tickId=null; }
+
+    function updateLegLabel(){
+      const name = (currentLegType === 'short') ? `идём ${shortSec} с` : `идём ${longSec} с`;
+      document.getElementById('leg').firstChild
+        ? document.getElementById('leg').firstChild.nodeValue = name+' '
+        : document.getElementById('leg').insertBefore(document.createTextNode(name+' '), document.getElementById('leg').firstChild);
+    }
+
+    // ===== События =====
+    document.getElementById('start').addEventListener('click', start);
+    document.getElementById('stop').addEventListener('click', stop);
+    document.getElementById('vol').addEventListener('input', ()=>{ ensureAudio(); applyVolumeFromUI(); });
+    document.getElementById('boost').addEventListener('change', ()=>{ ensureAudio(); applyBoostFromUI(); });
+    document.getElementById('test').addEventListener('click', ()=>{ ensureAudio(); beepPattern(10); });
+    document.getElementById('longSec').addEventListener('change', maybeAdjustCurrentLeg);
+    document.getElementById('longSec').addEventListener('input', ()=>{ // живое обновление подписи
+      const v = Number(document.getElementById('longSec').value||30);
+      longSec = Math.max(5, Math.min(600, v));
+      if(currentLegType==='long') updateLegLabel();
+    });
+
+    window.addEventListener('pagehide', stop);
+  </script>
 </body>
 </html>

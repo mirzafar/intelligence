@@ -23,7 +23,7 @@ class DiagramsHandler(BaseHandler):
         ]})
 
     async def post(self):
-        data = json.loads(self.request.body or '{}')
+        data = self.json
 
         title = StrUtils.to_str(data.get('title'))
         ms_uuid = StrUtils.to_str(data.get('ms_uuid'))
@@ -48,7 +48,7 @@ class DiagramHandler(BaseHandler):
         return self.success(data={'code': item.get('code')})
 
     async def post(self, ms_uuid):
-        data = json.loads(self.request.body or '{}')
+        data = self.json
 
         chat_id = StrUtils.to_str(data.get('chat_id'))
 
@@ -105,7 +105,7 @@ class DiagramHandler(BaseHandler):
         if not ms_uuid:
             return self.error('Invalid request')
 
-        data = json.loads(self.request.body or '{}')
+        data = self.json
 
         action = StrUtils.to_str(data.get('action'))
         if action == 'edit-code':

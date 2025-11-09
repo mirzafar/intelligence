@@ -5,18 +5,20 @@ import tornado.websocket
 
 
 class BaseHandler(tornado.web.RequestHandler):
+    @property
+    def json(self):
+        return json.loads(self.request.body or '{}')
+
     def success(self, data: dict = None):
         self.set_header('Content-Type', 'application/json')
-        response = {
+        return self.write(json.dumps({
             '_success': True,
             **(data or {})
-        }
-        self.write(json.dumps(response, default=str))
+        }, default=str))
 
-    def error(self, message='Error'):
+    def error(self, message: str = 'Error'):
         self.set_header('Content-Type', 'application/json')
-        response = {
+        return self.write(json.dumps({
             '_success': False,
             'message': message
-        }
-        self.write(json.dumps(response))
+        }))

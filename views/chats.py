@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 
 from bson import ObjectId
-from pymongo import ReturnDocument
 
 from core.ai_client import ai_client
 from core.handlers import BaseHandler
@@ -36,7 +35,7 @@ class ChatsHandler(BaseHandler):
                 'title': title
             })
 
-        self.success(data={'items': data})
+        return self.success(data={'items': data})
 
 
 class ChatHandler(BaseHandler):
@@ -91,7 +90,7 @@ class ChatHandler(BaseHandler):
 
             try:
                 upload_file = await ai_client.files.create(
-                    file=open(settings.get('root_dir', '') + '/static/uploads/' + file_path , 'rb'),
+                    file=open(settings.get('root_dir', '') + '/static/uploads/' + file_path, 'rb'),
                     purpose='assistants'
                 )
             except (Exception,) as er:

@@ -784,45 +784,42 @@
         const isUser = role === 'user';
         const bubbleClass = isUser ? 'user-bubble self-end' : 'assistant-bubble self-start';
 
-        let redirectBtn = '';
-        if (!isUser) {
-            redirectBtn = `
-              <button onclick="openRedirectModal('${id}')"
-                      class="absolute top-1 right-2 text-gray-400 hover:text-emerald-600 transition"
-                      title="Сохранить в базу" aria-label="Сохранить в базу">
-                <i class="fas fa-download"></i>
-              </button>`;
-        }
-
-        let designBtn = '';
-        if (!isUser) {
-            designBtn = `
-            <button onclick="openDesign('${id}')"
-                    class="absolute top-1 right-14 text-gray-400 hover:text-fuchsia-600 transition"
-                    title="Сгенерировать дизайн" aria-label="Сгенерировать дизайн">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-            </button>`;
-        }
-
-        let diagramBtn = '';
-        if (!isUser) {
-            diagramBtn = `
-              <button onclick="openDiagram('${id}')"
-                      class="absolute top-1 right-8 text-gray-400 hover:text-indigo-600 transition"
-                      title="Построить диаграмму" aria-label="Построить диаграмму">
-                <i class="fas fa-project-diagram"></i>
-              </button>`;
-        }
+        // ↓ Панель действий: снизу справа, только иконки
+        const actionsHtml = !isUser ? `
+    <div class="mt-1 flex justify-end">
+      <div class="flex items-center gap-1.5
+                  md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">
+        <button
+          onclick="openDesign('${id}')"
+          class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          title="Дизайн" aria-label="Дизайн">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+        </button>
+        <button
+          onclick="openDiagram('${id}')"
+          class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          title="Диаграмма" aria-label="Диаграмма">
+          <i class="fas fa-project-diagram text-xs"></i>
+        </button>
+        <button
+          onclick="openRedirectModal('${id}')"
+          class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          title="Сохранить" aria-label="Сохранить">
+          <i class="fas fa-download text-xs"></i>
+        </button>
+      </div>
+    </div>
+  ` : '';
 
         const bubble = `
-            <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
-              <div id="${id}"
-                   class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
-                   ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
-                <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
-                ${redirectBtn} ${diagramBtn} ${designBtn}
-              </div>
-            </div>`;
+    <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
+      <div id="${id}"
+           class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
+           ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
+        <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
+        ${actionsHtml}
+      </div>
+    </div>`;
 
         box.append(bubble);
         box.scrollTop(box[0].scrollHeight);

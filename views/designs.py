@@ -83,7 +83,7 @@ class DesignsHandler(BaseStreamHandler):
 
         if not (ObjectId.is_valid(chat_id) and ms_uuid):
             self.dispatch_error('Invalid request')
-            return await self.flush()
+            return self.finish()
 
         chat = await self.settings['db'].chats.find_one(
             {'_id': ObjectId(chat_id)}
@@ -96,7 +96,7 @@ class DesignsHandler(BaseStreamHandler):
 
         if not text:
             self.dispatch_error('Message not found')
-            return await self.flush()
+            return self.finish()
 
         inputs = []
 
@@ -123,4 +123,4 @@ class DesignsHandler(BaseStreamHandler):
         }}, upsert=True)
 
         self.dispatch_data({'content': resp.output_text})
-        return await self.flush()
+        return self.finish()

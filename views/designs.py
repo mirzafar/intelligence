@@ -110,7 +110,7 @@ class DesignsHandler(BaseStreamHandler):
         inputs.append({'role': 'user', 'content': text})
 
         resp = await ai_client.responses.create(
-            model='gpt-5-mini',
+            model='gpt-5.1-codex-mini',
             instructions=__system_message__,
             input=inputs
         )

@@ -74,18 +74,77 @@
             animation: popup-scale 0.25s ease-out;
         }
 
+        /* === USER MESSAGE (мягкий редизайн) === */
         .user-bubble {
-            background: linear-gradient(135deg, #06b6d491, #3b82f6d9);
-            color: #fff;
-            border-radius: 12px;
-            padding: 8px 12px;
+            position: relative;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            color: #0f172a;
+            border-radius: 14px;
+            padding: 10px 14px;
+            border: 1px solid rgba(147, 197, 253, 0.6);
+            box-shadow: 0 2px 6px rgba(30, 64, 175, 0.05),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(6px);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
 
+        /* лёгкий хвостик справа снизу */
+        .user-bubble::after {
+            content: "";
+            position: absolute;
+            right: -5px;
+            bottom: 12px;
+            width: 10px;
+            height: 10px;
+            background: inherit;
+            transform: rotate(45deg);
+            border-right: 1px solid rgba(147, 197, 253, 0.6);
+            border-bottom: 1px solid rgba(147, 197, 253, 0.6);
+        }
+
+        /* hover */
+        @media (hover: hover) {
+            .user-bubble:hover {
+                box-shadow: 0 4px 12px rgba(30, 64, 175, 0.08),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+                transform: translateY(-1px);
+            }
+        }
+
+        /* === ASSISTANT MESSAGE (мягкий glass) === */
         .assistant-bubble {
-            background: #f1f5f9;
-            color: #333;
-            border-radius: 12px;
-            padding: 8px 12px;
+            position: relative;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            color: #334155; /* slate-700 */
+            border-radius: 14px;
+            padding: 10px 14px;
+            border: 1px solid rgba(148, 163, 184, 0.45); /* slate-400 */
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05), /* мягкая внешняя тень */ inset 0 0 0 1px rgba(255, 255, 255, 0.35); /* светлая внутренняя кромка */
+            backdrop-filter: blur(6px);
+            transition: box-shadow .2s ease, transform .2s ease;
+        }
+
+        /* «хвостик» слева снизу */
+        .assistant-bubble::after {
+            content: "";
+            position: absolute;
+            left: -5px;
+            bottom: 12px;
+            width: 10px;
+            height: 10px;
+            background: inherit;
+            transform: rotate(45deg);
+            border-left: 1px solid rgba(148, 163, 184, 0.45);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+        }
+
+        /* hover — чуть выразительнее */
+        @media (hover: hover) {
+            .assistant-bubble:hover {
+                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+                transform: translateY(-1px);
+            }
         }
 
         .chat-item {
@@ -251,6 +310,910 @@
         #right-sidebar {
             display: none !important;
         }
+
+        /* --- LIVE PREVIEW --- */
+        #live-preview {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 130; /* выше #loader (100) */
+            width: min(900px, 92vw);
+            height: min(60vh, 560px); /* фиксированная высота с ограничением */
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            overflow: hidden; /* скроллим только внутреннюю область */
+            display: none; /* по умолчанию скрыт */
+        }
+
+        /* показываем через JS */
+        #live-preview.show {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* шапка */
+        #live-preview .lp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: linear-gradient(180deg, rgba(240, 253, 244, .9), rgba(255, 255, 255, .6));
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #065f46;
+        }
+
+        /* контентная область со скроллом */
+        #live-preview .lp-body {
+            flex: 1;
+            overflow: auto; /* скроллим здесь */
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: #0f172a;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* футер (подсказка) */
+        #live-preview .lp-footer {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #64748b;
+            border-top: 1px dashed rgba(0, 0, 0, .08);
+            background: rgba(255, 255, 255, .6);
+        }
+
+        /* плейсхолдер, пока текста нет */
+        #live-preview.empty .lp-body {
+            display: grid;
+            place-items: center;
+            color: #64748b;
+        }
+
+        #live-preview .lp-placeholder {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            font-size: 0.9rem;
+        }
+
+        #live-preview .lp-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34d399;
+            animation: lp-blink 1.2s infinite ease-in-out;
+        }
+
+        #live-preview .lp-dot:nth-child(2) {
+            animation-delay: .15s;
+        }
+
+        #live-preview .lp-dot:nth-child(3) {
+            animation-delay: .3s;
+        }
+
+        @keyframes lp-blink {
+            0%, 80%, 100% {
+                opacity: .2;
+                transform: translateY(0);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-3px);
+            }
+        }
+
+        /* кнопка закрытия (на случай, если хочется вручную скрыть) */
+        #live-preview .lp-close {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 8px;
+            color: #334155;
+        }
+
+        #live-preview .lp-close:hover {
+            background: rgba(0, 0, 0, .06);
+        }
+
+        /* === PROMPT INPUT (glass mellow) === */
+        #prompt-input {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+            border: 1px solid rgba(148, 163, 184, 0.45) !important; /* slate-400 */
+            border-radius: 14px !important;
+            padding: 12px 14px !important;
+            color: #0f172a !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.35) !important;
+            transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+            min-height: 44px;
+            max-height: 40vh; /* защитный потолок */
+            overflow: auto; /* когда текст очень длинный */
+        }
+
+        #prompt-input::placeholder {
+            color: #94a3b8; /* slate-400 */
+        }
+
+        #prompt-input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.55) !important; /* sky/blue оттенок */
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.10),
+            0 0 0 4px rgba(59, 130, 246, 0.12),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.45) !important;
+            background: linear-gradient(135deg, #f9fbff 0%, #ffffff 100%) !important;
+        }
+
+        /* тёмная тема (если используете .dark) */
+        .dark #prompt-input {
+            background: linear-gradient(135deg, #0b1220 0%, #0f172a 100%) !important;
+            color: #e2e8f0 !important;
+            border-color: rgba(100, 116, 139, .45) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .35),
+            inset 0 0 0 1px rgba(255, 255, 255, .06) !important;
+        }
+
+        .dark #prompt-input::placeholder {
+            color: #64748b;
+        }
+
+        /* === SEND BUTTON (calm pill) === */
+        #send-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 9999px;
+            border: 1px solid rgba(59, 130, 246, 0.35); /* blue-ish */
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); /* мягкий голубой */
+            color: #0b1220;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.10),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+            transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        #send-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform .2s ease, opacity .2s ease;
+        }
+
+        #send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(2, 132, 199, 0.14),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+            background: linear-gradient(135deg, #dff3ff 0%, #ffffff 100%);
+        }
+
+        #send-btn:active {
+            transform: translateY(0);
+        }
+
+        /* состояние загрузки — блокируем и крутим иконку */
+        #send-btn.is-loading {
+            pointer-events: none;
+            opacity: .85;
+        }
+
+        #send-btn.is-loading svg {
+            animation: spin 1s linear infinite;
+        }
+
+        /* disabled */
+        #send-btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        /* dark */
+        .dark #send-btn {
+            background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
+            color: #e2e8f0;
+            border-color: rgba(100, 116, 139, .45);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .35),
+            inset 0 0 0 1px rgba(255, 255, 255, .06);
+        }
+
+        .dark #send-btn:hover {
+            background: linear-gradient(135deg, #132033 0%, #0b1220 100%);
+        }
+
+        /* простая анимация вращения */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================
+   Chat List — full, lightweight
+   ========================= */
+
+        /* контейнер списка */
+        #chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 2px;
+            overflow: auto;
+            max-height: calc(100% - 44px); /* чтобы шапка панели не перекрывалась */
+        }
+
+        /* тонкий скролл (в вебкит-браузерах) */
+        #chat-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, .18);
+            border-radius: 4px;
+        }
+
+        /* карточка чата */
+        #chat-list .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 10px;
+            transition: background-color .12s ease, border-color .12s ease, transform .06s ease;
+        }
+
+        /* кнопка-тайтл (внутри .chat-item button.flex-1) */
+        #chat-list .chat-item button.flex-1 {
+            text-align: left;
+            font-size: 12.5px;
+            color: #0f172a; /* slate-900 */
+            padding: 6px 8px;
+            line-height: 1.35;
+            border-radius: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* hover карточки — только фон/граница, без тяжёлых теней */
+        #chat-list .chat-item:hover {
+            background: #f8fafc; /* slate-50 */
+            border-color: #d1d5db; /* gray-300 */
+        }
+
+        /* активная карточка — чёткая левая полоска + контрастная рамка */
+        #chat-list .chat-item.active {
+            background: #f0f7ff; /* очень мягкий голубой */
+            border-color: #3b82f6; /* blue-500 */
+            position: relative;
+        }
+
+        #chat-list .chat-item.active::before {
+            content: "";
+            position: absolute;
+            left: -1px;
+            top: 4px;
+            bottom: 4px;
+            width: 3px;
+            border-radius: 2px;
+            background: #3b82f6;
+        }
+
+        /* кнопка удаления справа — заметна, но ненавязчива */
+        #chat-list .chat-item .delete-btn {
+            opacity: .65;
+            transition: opacity .12s ease, transform .06s ease;
+        }
+
+        #chat-list .chat-item .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.06);
+        }
+
+        /* лёгкое «нажатие» всей карточки */
+        #chat-list .chat-item:active {
+            transform: translateY(1px);
+        }
+
+        /* ── Дополнительно: бейдж «непрочитано» (если захочешь) ── */
+        #chat-list .chat-item .chat-badge {
+            margin-left: 4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            background: #ef4444; /* red-500 */
+        }
+
+        /* ── Дополнительно: таймштамп справа (необязательно) ── */
+        #chat-list .chat-item .chat-meta {
+            margin-left: auto;
+            padding: 0 6px;
+            font-size: 11.5px;
+            color: #64748b; /* slate-500 */
+        }
+
+        /* тёмная тема (если используешь .dark на html/body) */
+        .dark #chat-list .chat-item {
+            background: #0f172a; /* slate-900 */
+            border-color: #1f2937; /* gray-800 */
+        }
+
+        .dark #chat-list .chat-item:hover {
+            background: #111827; /* gray-900 */
+            border-color: #374151; /* gray-700 */
+        }
+
+        .dark #chat-list .chat-item button.flex-1 {
+            color: #e5e7eb;
+        }
+
+        .dark #chat-list .chat-item .chat-meta {
+            color: #94a3b8;
+        }
+
+        .dark #chat-list .chat-item.active {
+            background: #0b1a2b;
+            border-color: #60a5fa; /* blue-400 */
+        }
+
+        .dark #chat-list .chat-item.active::before {
+            background: #60a5fa;
+        }
+
+        /* уважение к reduce-motion — отключаем анимации */
+        @media (prefers-reduced-motion: reduce) {
+            #chat-list .chat-item,
+            #chat-list .chat-item .delete-btn {
+                transition: none !important;
+            }
+        }
+
+        /* ==== Diagram Prompt: input + send ==== */
+        #diagram-prompt {
+            backdrop-filter: none; /* по-лёгкому, без blur */
+            background: #ffffffcc; /* 80% белого */
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* textarea — стеклянная карточка, но лёгкая */
+        #diagram-prompt-input {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+            border: 1px solid rgba(148, 163, 184, .45) !important; /* slate-400 */
+            border-radius: 12px !important;
+            padding: 10px 12px !important;
+            color: #0f172a !important;
+            min-height: 40px;
+            max-height: 28vh; /* не раздуваем панель */
+            overflow: auto; /* скролл внутри, без рефлоудов */
+            box-shadow: 0 1px 4px rgba(15, 23, 42, .04),
+            inset 0 0 0 1px rgba(255, 255, 255, .35) !important;
+            transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+            resize: none; /* оставим автоскролл, без ручного ресайза */
+        }
+
+        #diagram-prompt-input::placeholder {
+            color: #94a3b8;
+        }
+
+        #diagram-prompt-input:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, .55) !important; /* blue */
+            box-shadow: 0 3px 10px rgba(59, 130, 246, .10),
+            0 0 0 4px rgba(59, 130, 246, .12),
+            inset 0 0 0 1px rgba(255, 255, 255, .45) !important;
+            background: linear-gradient(135deg, #f9fbff 0%, #ffffff 100%) !important;
+        }
+
+        /* кнопка отправки — компактная «пилюля» */
+        #diagram-prompt-send {
+            height: 40px;
+            padding: 0 14px;
+            border-radius: 9999px;
+            border: 1px solid rgba(59, 130, 246, .35);
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, .10),
+            inset 0 0 0 1px rgba(255, 255, 255, .6);
+            transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        #diagram-prompt-send i {
+            transition: transform .2s ease, opacity .2s ease;
+        }
+
+        #diagram-prompt-send:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(2, 132, 199, .14),
+            inset 0 0 0 1px rgba(255, 255, 255, .7);
+            background: linear-gradient(135deg, #dff3ff 0%, #ffffff 100%);
+        }
+
+        #diagram-prompt-send:active {
+            transform: translateY(0);
+        }
+
+        #diagram-prompt-send:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        /* loading-состояние: крутим иконку */
+        #diagram-prompt-send.is-loading {
+            pointer-events: none;
+            opacity: .9;
+        }
+
+        #diagram-prompt-send.is-loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* тёмная тема */
+        .dark #diagram-prompt {
+            background: #0f172acc;
+            border-top-color: #1f2937;
+        }
+
+        .dark #diagram-prompt-input {
+            background: linear-gradient(135deg, #0b1220 0%, #0f172a 100%) !important;
+            color: #e2e8f0 !important;
+            border-color: rgba(100, 116, 139, .45) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .35),
+            inset 0 0 0 1px rgba(255, 255, 255, .06) !important;
+        }
+
+        .dark #diagram-prompt-input::placeholder {
+            color: #64748b;
+        }
+
+        .dark #diagram-prompt-send {
+            background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
+            color: #e2e8f0;
+            border-color: rgba(100, 116, 139, .45);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .35),
+            inset 0 0 0 1px rgba(255, 255, 255, .06);
+        }
+
+        .dark #diagram-prompt-send:hover {
+            background: linear-gradient(135deg, #132033 0%, #0b1220 100%);
+        }
+
+        /* уважение к reduce-motion */
+        @media (prefers-reduced-motion: reduce) {
+            #diagram-prompt-send,
+            #diagram-prompt-input {
+                transition: none !important;
+            }
+
+            #diagram-prompt-send.is-loading i {
+                animation: none;
+            }
+        }
+
+        /* ===== Diagram empty button ===== */
+        #diagram-empty .diagram-empty-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1;
+            color: #0b1220;
+            background: linear-gradient(135deg, #e0f7ff 0%, #f5fbff 100%);
+            border: 1px solid rgba(2, 132, 199, .35); /* cyan-600 @ 35% */
+            box-shadow: 0 6px 14px rgba(2, 132, 199, .14),
+            inset 0 0 0 1px rgba(255, 255, 255, .65);
+            transition: transform .12s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+        }
+
+        #diagram-empty .diagram-empty-btn:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #daf4ff 0%, #ffffff 100%);
+            box-shadow: 0 10px 20px rgba(2, 132, 199, .18),
+            inset 0 0 0 1px rgba(255, 255, 255, .75);
+            border-color: rgba(2, 132, 199, .5);
+        }
+
+        #diagram-empty .diagram-empty-btn:active {
+            transform: translateY(0);
+        }
+
+        #diagram-empty .diagram-empty-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, .18),
+            0 0 0 6px rgba(59, 130, 246, .12); /* лёгкий внешний фокус */
+        }
+
+        #diagram-empty .diagram-empty-btn i {
+            font-size: 14px;
+            opacity: .9;
+            transition: transform .2s ease, opacity .2s ease;
+        }
+
+        #diagram-empty .diagram-empty-btn:hover i {
+            transform: translateX(1px);
+        }
+
+        /* тёмная тема */
+        .dark #diagram-empty .diagram-empty-btn {
+            color: #e5e7eb;
+            background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
+            border-color: rgba(148, 163, 184, .35);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, .35),
+            inset 0 0 0 1px rgba(255, 255, 255, .06);
+        }
+
+        .dark #diagram-empty .diagram-empty-btn:hover {
+            background: linear-gradient(135deg, #132033 0%, #0b1220 100%);
+            border-color: rgba(148, 163, 184, .5);
+        }
+
+        /* уважение к reduce-motion */
+        @media (prefers-reduced-motion: reduce) {
+            #diagram-empty .diagram-empty-btn {
+                transition: none !important;
+            }
+
+            #diagram-empty .diagram-empty-btn i {
+                transition: none !important;
+            }
+        }
+
+        /* ==============================
+   Pane Diagrams — Calm Minimal
+   ============================== */
+
+        /* видимость панели контролируется радио — оставляем так */
+        .pane-diagrams {
+            display: none;
+            padding: 4px;
+        }
+
+        #tab-diagrams:checked ~ .tab-content .pane-diagrams {
+            display: block;
+        }
+
+        /* сам список — простой вертикальный поток */
+        .pane-diagrams #diagram-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 2px;
+            overflow: auto;
+            max-height: calc(100% - 4px);
+        }
+
+        /* карточка-строка: ровная, без теней/градиентов */
+        .pane-diagrams #diagram-list .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 12px;
+            transition: background-color .12s ease, border-color .12s ease, transform .06s ease;
+        }
+
+        /* маленькая «иконка диаграммы» слева — чистый маркер без SVG */
+        .pane-diagrams #diagram-list .chat-item::before {
+            content: "";
+            flex: 0 0 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: #eef6ff; /* очень мягкий синий */
+            border: 1px solid #dbeafe; /* blue-100 */
+        }
+
+        /* заголовок кнопкой — две строки максимум */
+        .pane-diagrams #diagram-list .chat-item button.flex-1 {
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.35;
+            color: #0f172a; /* slate-900 */
+            padding: 0;
+            border-radius: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* максимум 2 строки */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ховер: едва заметное подсветление и чуток темнее граница */
+        .pane-diagrams #diagram-list .chat-item:hover {
+            background: #f8fafc; /* slate-50 */
+            border-color: #d1d5db; /* gray-300 */
+        }
+
+        /* активная — строгая голубая рамка + тонкая левая полоса */
+        .pane-diagrams #diagram-list .chat-item.active {
+            background: #f6faff;
+            border-color: #3b82f6; /* blue-500 */
+            position: relative;
+        }
+
+        .pane-diagrams #diagram-list .chat-item.active::after {
+            content: "";
+            position: absolute;
+            left: -1px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            border-radius: 2px;
+            background: #3b82f6;
+        }
+
+        /* кнопки действий справа (если есть) — деликатные */
+        .pane-diagrams #diagram-list .chat-item .delete-btn {
+            opacity: .65;
+            transition: opacity .12s ease, transform .06s ease;
+        }
+
+        .pane-diagrams #diagram-list .chat-item .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.06);
+        }
+
+        /* пустое состояние из API: делаем аккуратно */
+        .pane-diagrams #diagram-list .text-gray-500.text-xs {
+            width: 100%;
+            text-align: center;
+            padding: 16px;
+            color: #64748b; /* slate-500 */
+            background: #f8fafc;
+            border: 1px dashed #d1d5db;
+            border-radius: 12px;
+            font-size: 13px;
+        }
+
+        /* тонкий скролл */
+        .pane-diagrams #diagram-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .pane-diagrams #diagram-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, .18);
+            border-radius: 4px;
+        }
+
+        /* тёмная тема — тот же минимализм */
+        .dark .pane-diagrams #diagram-list .chat-item {
+            background: #0f172a; /* slate-900 */
+            border-color: #1f2937; /* gray-800 */
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item:hover {
+            background: #111827;
+            border-color: #374151; /* gray-700 */
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item::before {
+            background: #0b1220;
+            border-color: #1f2937;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item button.flex-1 {
+            color: #e5e7eb;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item.active {
+            background: #0b1a2b;
+            border-color: #60a5fa; /* blue-400 */
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item.active::after {
+            background: #60a5fa;
+        }
+
+        .dark .pane-diagrams #diagram-list .text-gray-500.text-xs {
+            color: #94a3b8;
+            background: #0b1220;
+            border-color: #1f2937;
+        }
+
+        /* уважение к reduce-motion */
+        @media (prefers-reduced-motion: reduce) {
+            .pane-diagrams #diagram-list .chat-item,
+            .pane-diagrams #diagram-list .chat-item .delete-btn {
+                transition: none !important;
+            }
+        }
+
+        /* ==============================
+   Pane Diagrams — Compact Deluxe
+   ============================== */
+
+        .pane-diagrams {
+            display: none;
+            padding: 4px;
+        }
+
+        #tab-diagrams:checked ~ .tab-content .pane-diagrams {
+            display: block;
+        }
+
+        /* список: очень плотный поток */
+        .pane-diagrams #diagram-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px; /* чуть воздуха */
+            padding: 2px;
+            overflow: auto;
+            max-height: calc(100% - 4px);
+        }
+
+        /* строка-элемент: низкий, чёткий, без теней */
+        .pane-diagrams #diagram-list .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px; /* компактно */
+            background: #fff;
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 10px;
+            transition: background-color .12s ease, border-color .12s ease;
+            min-height: 34px; /* низкий ряд */
+        }
+
+        /* маленький маркер слева */
+        .pane-diagrams #diagram-list .chat-item::before {
+            content: "";
+            flex: 0 0 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: #eef6ff;
+            border: 1px solid #dbeafe;
+        }
+
+        /* заголовок: 1 строка, обрезка, мелкий кегль */
+        .pane-diagrams #diagram-list .chat-item button.flex-1 {
+            text-align: left;
+            padding: 0;
+            font-size: 12.5px;
+            line-height: 1.25;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ховер: лёгчайший фон и граница */
+        .pane-diagrams #diagram-list .chat-item:hover {
+            background: #f8fafc; /* slate-50 */
+            border-color: #d1d5db; /* gray-300 */
+        }
+
+        /* активная: строгая рамка + тонкая полоса */
+        .pane-diagrams #diagram-list .chat-item.active {
+            background: #f6faff;
+            border-color: #3b82f6; /* blue-500 */
+            position: relative;
+        }
+
+        .pane-diagrams #diagram-list .chat-item.active::after {
+            content: "";
+            position: absolute;
+            left: -1px;
+            top: 6px;
+            bottom: 6px;
+            width: 2px;
+            border-radius: 2px;
+            background: #3b82f6;
+        }
+
+        /* иконки действий справа — компактные */
+        .pane-diagrams #diagram-list .chat-item .delete-btn {
+            opacity: .65;
+            transition: opacity .12s ease, transform .06s ease;
+        }
+
+        .pane-diagrams #diagram-list .chat-item .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        /* пустое состояние — тонкая карточка */
+        .pane-diagrams #diagram-list .text-gray-500.text-xs {
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px dashed #d1d5db;
+            border-radius: 10px;
+            font-size: 12.5px;
+        }
+
+        /* тонкий скролл */
+        .pane-diagrams #diagram-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .pane-diagrams #diagram-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, .18);
+            border-radius: 4px;
+        }
+
+        /* тёмная тема */
+        .dark .pane-diagrams #diagram-list .chat-item {
+            background: #0f172a;
+            border-color: #1f2937;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item:hover {
+            background: #111827;
+            border-color: #374151;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item::before {
+            background: #0b1220;
+            border-color: #1f2937;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item button.flex-1 {
+            color: #e5e7eb;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item.active {
+            background: #0b1a2b;
+            border-color: #60a5fa;
+        }
+
+        .dark .pane-diagrams #diagram-list .chat-item.active::after {
+            background: #60a5fa;
+        }
+
+        .dark .pane-diagrams #diagram-list .text-gray-500.text-xs {
+            color: #94a3b8;
+            background: #0b1220;
+            border-color: #1f2937;
+        }
+
+        /* уважение к reduce-motion */
+        @media (prefers-reduced-motion: reduce) {
+            .pane-diagrams #diagram-list .chat-item,
+            .pane-diagrams #diagram-list .chat-item .delete-btn {
+                transition: none !important;
+            }
+        }
+
+        #prompt-input {
+            background: rgba(255, 255, 255, .9) !important; /* или оставь как у тебя */
+            border: 1px solid rgba(148, 163, 184, .45) !important;
+        }
+
+        .dark #prompt-input {
+            background: rgba(15, 23, 42, .85) !important;
+        }
+
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2 md:p-4">
@@ -265,7 +1228,7 @@
 
     <!-- Левая панель (desktop) с вкладками -->
     <aside id="left-sidebar"
-           class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 border-r overflow-hidden scrollbar-thin flex-col">
+           class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 overflow-hidden scrollbar-thin flex-col">
         <div class="tabs">
             <!-- radios -->
             <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-chats" checked>
@@ -337,7 +1300,7 @@
         </div>
 
         <!-- Ввод -->
-        <div class="border-t p-3 bg-white/80 backdrop-blur">
+        <div class="p-3 bg-white/80 backdrop-blur">
             <div class="flex items-end gap-2">
                 <textarea id="prompt-input" rows="1" placeholder="Введите сообщение..."
                           class="flex-1 resize-none bg-gray-100 p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-400 text-sm"></textarea>
@@ -350,14 +1313,6 @@
             </div>
         </div>
     </main>
-
-    <!-- Правая панель (desktop) — визуально скрыта, оставлена для совместимости -->
-    <!--    <aside id="right-sidebar"-->
-    <!--           class="hidden lg:flex w-1/6 bg-white/60 backdrop-blur p-4 border-l scrollbar-thin overflow-y-auto flex-col">-->
-    <!--        <div class="p-4 text-xs text-gray-500">-->
-    <!--            Перенесено во вкладки слева.-->
-    <!--        </div>-->
-    <!--    </aside>-->
 </div>
 
 <!-- Offcanvas слева (мобильный) с вкладками -->
@@ -644,25 +1599,98 @@
     let latestSVG = "";
     let isMiroOpen = false;
 
+    function ensureLivePreview() {
+        let el = document.getElementById('live-preview');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'live-preview';
+            el.innerHTML = `
+              <div class="lp-header">
+                <span></span>
+                <button class="lp-close" title="Скрыть" aria-label="Скрыть превью" type="button">✕</button>
+              </div>
+              <div class="lp-body">
+                <div class="lp-placeholder">
+                  <span class="lp-dot"></span><span class="lp-dot"></span><span class="lp-dot"></span>
+                  <span>Ожидаем ответ…</span>
+                </div>
+              </div>
+              <div class="lp-footer">Предпросмотр AI ответ</div>
+            `;
+            document.body.appendChild(el);
+
+            // close button
+            el.querySelector('.lp-close').addEventListener('click', hideLivePreview);
+        }
+        return el;
+    }
+
+    function showLivePreview(initialText = '') {
+        const el = ensureLivePreview();
+        const body = el.querySelector('.lp-body');
+        const placeholder = el.querySelector('.lp-placeholder');
+
+        if (initialText && initialText.length) {
+            body.textContent = initialText;
+            el.classList.remove('empty');
+        } else {
+            // оставляем плейсхолдер
+            if (!placeholder) {
+                const ph = document.createElement('div');
+                ph.className = 'lp-placeholder';
+                ph.innerHTML = '<span class="lp-dot"></span><span class="lp-dot"></span><span class="lp-dot"></span><span>Готовлю ответ…</span>';
+                body.innerHTML = '';
+                body.appendChild(ph);
+            }
+            el.classList.add('empty');
+        }
+        el.classList.add('show');
+    }
+
+    function updateLivePreview(fullText = '') {
+        const el = ensureLivePreview();
+        const body = el.querySelector('.lp-body');
+        if (!fullText) {
+            el.classList.add('empty');
+            if (!body.querySelector('.lp-placeholder')) {
+                const ph = document.createElement('div');
+                ph.className = 'lp-placeholder';
+                ph.innerHTML = '<span class="lp-dot"></span><span class="lp-dot"></span><span class="lp-dot"></span><span>Готовлю ответ…</span>';
+                body.innerHTML = '';
+                body.appendChild(ph);
+            }
+        } else {
+            el.classList.remove('empty');
+            body.textContent = fullText; // важное: весь текст
+            // авто-скролл вниз по мере роста
+            body.scrollTop = body.scrollHeight;
+        }
+        el.classList.add('show');
+    }
+
+    function hideLivePreview() {
+        const el = document.getElementById('live-preview');
+        if (el) {
+            el.classList.remove('show');
+        }
+    }
+
+
     function toMiroEmbedUrl(raw) {
         try {
             const u = new URL(raw);
-            // Если это обычная ссылка вида /app/board/{id}/... -> заменим на /app/live-embed/{id}/...
             if (u.pathname.includes('/app/board/')) {
                 u.pathname = u.pathname.replace('/app/board/', '/app/live-embed/');
                 return u.href;
             }
-            // Если уже live-embed — оставляем как есть
             if (u.pathname.includes('/app/live-embed/')) {
                 return u.href;
             }
-            // Фолбэк: попробуем собрать live-embed из последнего сегмента пути
             const segs = u.pathname.split('/').filter(Boolean);
             const last = segs[segs.length - 1] || '';
             u.pathname = `/app/live-embed/${last}/`;
             return u.href;
         } catch (e) {
-            // Если URL не распарсился — вернем, как есть (вдруг уже корректная embed-ссылка)
             return raw;
         }
     }
@@ -774,10 +1802,6 @@
         return crypto.randomUUID();
     }
 
-    function escapeHtml(s = '') {
-        return $('<div>').text(s).html();
-    }
-
     function appendMessage(role, text, messageId = null) {
         const box = $('#chat-box');
         const id = messageId || 'msg-' + Date.now();
@@ -786,40 +1810,40 @@
 
         // ↓ Панель действий: снизу справа, только иконки
         const actionsHtml = !isUser ? `
-    <div class="mt-1 flex justify-end">
-      <div class="flex items-center gap-1.5
-                  md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">
-        <button
-          onclick="openDesign('${id}')"
-          class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-          title="Дизайн" aria-label="Дизайн">
-          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-        </button>
-        <button
-          onclick="openDiagram('${id}')"
-          class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-          title="Диаграмма" aria-label="Диаграмма">
-          <i class="fas fa-project-diagram text-xs"></i>
-        </button>
-        <button
-          onclick="openRedirectModal('${id}')"
-          class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-          title="Сохранить" aria-label="Сохранить">
-          <i class="fas fa-download text-xs"></i>
-        </button>
-      </div>
-    </div>
-  ` : '';
+        <div class="mt-1 flex justify-end">
+          <div class="flex items-center gap-1.5
+                      md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150">
+            <button
+              onclick="openDesign('${id}')"
+              class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              title="Дизайн" aria-label="Дизайн">
+              <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+            </button>
+            <button
+              onclick="openDiagram('${id}')"
+              class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              title="Диаграмма" aria-label="Диаграмма">
+              <i class="fas fa-project-diagram text-xs"></i>
+            </button>
+            <button
+              onclick="openRedirectModal('${id}')"
+              class="p-1.5 rounded-full bg-white/70 border border-gray-200 shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              title="Сохранить" aria-label="Сохранить">
+              <i class="fas fa-download text-xs"></i>
+            </button>
+          </div>
+        </div>
+      ` : '';
 
         const bubble = `
-    <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
-      <div id="${id}"
-           class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
-           ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
-        <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
-        ${actionsHtml}
-      </div>
-    </div>`;
+        <div class="flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-1">
+          <div id="${id}"
+               class="relative group max-w-[75%] px-3 py-2 text-sm shadow-sm ${bubbleClass}"
+               ${!isUser ? 'ondblclick="editMessage(\'' + id + '\')"' : ''}>
+            <div class="msg-text whitespace-pre-line">${$('<div>').text(text).html()}</div>
+            ${actionsHtml}
+          </div>
+        </div>`;
 
         box.append(bubble);
         box.scrollTop(box[0].scrollHeight);
@@ -1067,13 +2091,18 @@
             const res = await fetch(`/api/diagrams/${id}`);
             const data = await res.json();
             if (!data || !data.code) {
-                $('#diagram-content').removeClass('p-6').addClass('p-0 relative').empty().append(`
-                    <div id="diagram-empty" class="absolute inset-0 flex items-center justify-center">
-                      <button onclick="generateDiagram('${id}')"
-                              class="px-6 py-3 bg-teal-500 text-black rounded-lg shadow hover:bg-teal-700">
-                        <i class="fas fa-magic mr-2"></i> Генерировать диаграмму
-                      </button>
-                    </div>`);
+                $('#diagram-content')
+                    .removeClass('p-6')
+                    .addClass('p-0 relative')
+                    .empty()
+                    .append(`
+                        <div id="diagram-empty" class="absolute inset-0 flex items-center justify-center">
+                          <button onclick="generateDiagram('${id}')" class="diagram-empty-btn" type="button">
+                            <i class="fas fa-magic"></i>
+                            <span>Генерировать диаграмму</span>
+                          </button>
+                        </div>
+                      `);
                 return;
             }
             currentDiagramCode = data.code;
@@ -1411,6 +2440,8 @@
         $('#send-btn').click(async function () {
             const prompt = $('#prompt-input').val().trim();
             if (!prompt) return alert('Введите сообщение');
+            const $btn = $('#send-btn');
+            $btn.prop('disabled', true).addClass('is-loading');
             let ms_uuid = generateUUID();
 
             appendMessage('user', prompt);
@@ -1419,32 +2450,65 @@
             try {
                 const response = await fetch('/api/response', {
                     method: 'POST',
-                    body: JSON.stringify({prompt: prompt, chat_id: currentChatId, ms_uuid: ms_uuid})
+                    body: JSON.stringify({prompt, chat_id: currentChatId, ms_uuid})
                 });
 
                 if (!response.ok) throw new Error(`Ошибка ${response.status}`);
                 if (!response.body) throw new Error('Поток не поддерживается');
-
+                showLivePreview('');
+                hideLoader();
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
+                let buffer = '';
                 let assistantMessage = '';
 
                 while (true) {
                     const {done, value} = await reader.read();
                     if (done) break;
-                    const chunk = decoder.decode(value, {stream: true});
-                    const parsedData = JSON.parse(chunk);
-                    assistantMessage += parsedData.text;
-                    currentChatId = parsedData.chat_id;
-                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
-                    $('#prompt-input').val('').css('height', 'auto');
+
+                    buffer += decoder.decode(value, {stream: true}).replace(/\r/g, '');
+
+                    let nl;
+                    while ((nl = buffer.indexOf('\n')) !== -1) {
+                        const line = buffer.slice(0, nl).trim();
+                        buffer = buffer.slice(nl + 1);
+
+                        if (!line) continue;
+                        if (line === '[DONE]') {
+                            appendMessage('assistant', assistantMessage, ms_uuid);
+                            $('#prompt-input').val('').css('height', 'auto');
+                            $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                            hideLivePreview();
+                            hideLoader();
+                            loadChatHistory();
+                            return;
+                        }
+
+                        const parsed = JSON.parse(line);
+                        assistantMessage += parsed.text ?? '';
+                        currentChatId = parsed.chat_id ?? currentChatId;
+                        updateLivePreview(assistantMessage);
+
+                        $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                    }
                 }
+
+                if (buffer.trim()) {
+                    const parsed = JSON.parse(buffer);
+                    assistantMessage += parsed.text ?? '';
+                    currentChatId = parsed.chat_id ?? currentChatId;
+                    updateLivePreview(assistantMessage);
+                }
+
                 appendMessage('assistant', assistantMessage, ms_uuid);
+
             } catch (error) {
                 appendMessage('assistant', `Ошибка: ${error.message}`);
             } finally {
                 hideLoader();
                 loadChatHistory();
+                hideLivePreview();
+                $('#send-btn').prop('disabled', false).removeClass('is-loading');
             }
         });
 

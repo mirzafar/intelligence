@@ -1,4 +1,3 @@
-import os
 import traceback
 from datetime import datetime
 from urllib.parse import quote
@@ -14,11 +13,9 @@ from settings import settings
 
 class FilesHandler(BaseHandler):
     async def get(self):
-        filters = {
+        items = await self.settings['db'].files.find({
             'is_active': True
-        }
-
-        items = await self.settings['db'].files.find(filters).sort('_id', -1).to_list(length=None)
+        }).sort('_id', -1).to_list(length=None)
 
         self.success(data={'items': items})
 
@@ -44,8 +41,14 @@ class FilesHandler(BaseHandler):
                 file=(file.filename, file.body),
                 purpose='assistants'
             )
-        except (Exception,) as er:
+            if ai_client.vector_store_id:
+                await ai_client.vector_stores.file_batches.create_and_poll(
+                    vector_store_id=ai_client.vector_store_id,
+                    file_ids=[upload_file.id]
+                )
+                await ai_client.calc_files()
 
+        except (Exception,) as er:
             return self.error(message=str(er))
 
         data = {
@@ -61,7 +64,7 @@ class FilesHandler(BaseHandler):
         if not inserted.inserted_id:
             return self.error(message='Операция не выполнена')
 
-        self.success(data={'items': data})
+        return self.success(data={'items': data})
 
 
 class FileHandler(BaseHandler):
@@ -80,10 +83,19 @@ class FileHandler(BaseHandler):
         if file.get('external_id'):
             try:
                 await ai_client.files.delete(file['external_id'])
+                if ai_client.vector_store_id:
+                    try:
+                        await ai_client.vector_stores.files.delete(
+                            vector_store_id=ai_client.vector_store_id,
+                            file_id=file['external_id']
+                        )
+                        await ai_client.calc_files()
+                    except (Exception,):
+                        traceback.print_exc()
             except (Exception,):
                 traceback.print_exc()
 
-        self.success(data={})
+        return self.success(data={})
 
 
 class FileDownloadHandler(BaseHandler):
@@ -94,11 +106,9 @@ class FileDownloadHandler(BaseHandler):
         if not item or not item.get('file_path'):
             return self.error(message='File not found')
 
-        file_path = settings.get('root_dir', '') + '/static/uploads/' + item['file_path']
+        file_path = settings['root_dir'] + '/static/uploads/' + item['file_path']
 
-        original_filename = os.path.basename(item['file_path'])
-        file_extension = os.path.splitext(original_filename)[1]
-        download_filename = f"{item['title']}{file_extension}"
+        download_filename = f"{item['title']}"
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Disposition', f'attachment; filename="{quote(download_filename)}"')
@@ -110,4 +120,4 @@ class FileDownloadHandler(BaseHandler):
                     break
                 self.write(data)
 
-        self.finish()
+        return self.finish()

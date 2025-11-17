@@ -67,7 +67,7 @@ async def save_file(file, _type: str = 'text') -> tuple[bool, Optional[str]]:
         return True, f'{uid[:2]}/{uid[2:4]}/{uid}.pdf'
 
     else:
-        ext = file.name.split('.')[len(file.name.split('.')) - 1]
+        ext = file.filename.split('.')[len(file.filename.split('.')) - 1]
         file_name = f'{file_path}/{uid[:2]}/{uid[2:4]}/{uid}.{ext}'
         os.makedirs(f'{file_path}/{uid[:2]}/{uid[2:4]}', 0o755, True)
 

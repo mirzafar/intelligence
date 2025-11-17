@@ -168,23 +168,12 @@ class ResponseHandler(tornado.web.RequestHandler):
         self,
         prompt: str,
         ms_uuid: str,
-        file_ids: list = None,
         content: List[dict] = None,
         chat_id: str = None
     ) -> list:
         try:
             if not content:
                 content = []
-                # if file_ids:
-                #     content.append({
-                #         'role': 'user',
-                #         'content': [
-                #             *[
-                #                 {'type': 'input_file', 'file_id': fid}
-                #                 for fid in file_ids
-                #             ]
-                #         ]
-                #     })
 
             content.append({
                 'role': 'user',
@@ -203,12 +192,25 @@ class ResponseHandler(tornado.web.RequestHandler):
                 else:
                     input_content.append(c)
 
-            response = await ai_client.responses.create(
-                model='gpt-5-nano',
-                instructions=__system_message__,
-                input=input_content,
-                stream=True
-            )
+            if ai_client.has_files is True:
+                response = await ai_client.responses.create(
+                    model='gpt-4o-mini',
+                    temperature=0.4,
+                    instructions=__system_message__,
+                    input=input_content,
+                    stream=True,
+                    tools=[
+                        {'type': 'file_search', 'vector_store_ids': [ai_client.vector_store_id]},
+                        {'type': 'web_search'}
+                    ]
+                )
+            else:
+                response = await ai_client.responses.create(
+                    model='gpt-5-nano',
+                    instructions=__system_message__,
+                    input=input_content,
+                    stream=True
+                )
 
             chunks = ''
             async for event in response:
@@ -272,16 +274,11 @@ class ResponseHandler(tornado.web.RequestHandler):
                 '_id': ObjectId(chat_id)
             })
 
-        file_ids = None
-        if not chat:
-            file_ids = await self.settings['db'].files.distinct('external_id', {'is_active': True})
-
         chat_id = chat_id or str(ObjectId())
         await self.flush()
 
         content = await self.__function(
             prompt=prompt,
-            file_ids=file_ids,
             content=chat['content'] if chat else None,
             ms_uuid=ms_uuid,
             chat_id=chat_id

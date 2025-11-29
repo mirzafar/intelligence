@@ -232,29 +232,111 @@
         }
 
         .tab-controls {
-            display: grid;
-            grid-auto-flow: column;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
             gap: .25rem;
-            background: rgba(17, 24, 39, .04);
-            padding: .35rem;
-            border-radius: .75rem;
-            border: 1px solid rgba(0, 0, 0, .06);
+            padding: .25rem;
+            border-radius: 999px;
+            background: radial-gradient(140% 160% at 0% 0%, rgba(59, 130, 246, .12), transparent),
+            radial-gradient(140% 160% at 100% 100%, rgba(16, 185, 129, .10), transparent),
+            rgba(248, 250, 252, .9);
+            border: 1px solid rgba(148, 163, 184, .55); /* slate-400 */
+            box-shadow: 0 10px 26px rgba(15, 23, 42, .08),
+            inset 0 0 0 1px rgba(255, 255, 255, .8);
         }
 
+        /* кнопки-табы */
         .tab-controls label {
-            text-align: center;
+            position: relative;
+            flex: 1 1 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            padding: .45rem .8rem;
+            border-radius: 999px;
             font-size: .75rem;
-            padding: .5rem .6rem;
-            border-radius: .65rem;
+            font-weight: 600;
+            letter-spacing: .01em;
             cursor: pointer;
-            transition: all .15s ease;
-            color: #374151;
             user-select: none;
             white-space: nowrap;
+            color: #64748b; /* slate-500 */
+            background: transparent;
+            transition: background .16s ease,
+            color .16s ease,
+            box-shadow .16s ease,
+            transform .08s ease,
+            border-color .16s ease;
         }
 
-        .tab-controls label:hover {
-            background: rgba(0, 0, 0, .05);
+        .tab-controls label i {
+            font-size: .8rem;
+            opacity: .75;
+            transition: transform .16s ease, opacity .16s ease;
+        }
+
+        /* hover по табу */
+        @media (hover: hover) {
+            .tab-controls label:hover {
+                background: rgba(255, 255, 255, .95);
+                color: #0f172a;
+                box-shadow: 0 6px 16px rgba(15, 23, 42, .08);
+                transform: translateY(-1px);
+            }
+
+            .tab-controls label:hover i {
+                opacity: 1;
+                transform: translateY(-1px);
+            }
+        }
+
+        /* тёмная тема */
+        .dark .tab-controls {
+            background: radial-gradient(140% 160% at 0% 0%, rgba(59, 130, 246, .18), transparent),
+            radial-gradient(140% 160% at 100% 100%, rgba(16, 185, 129, .18), transparent),
+            rgba(15, 23, 42, .96);
+            border-color: rgba(51, 65, 85, .9); /* slate-700 */
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .6),
+            inset 0 0 0 1px rgba(148, 163, 184, .25);
+        }
+
+        .dark .tab-controls label {
+            color: #9ca3af; /* gray-400 */
+        }
+
+        .dark .tab-controls label:hover {
+            background: rgba(15, 23, 42, .9);
+            color: #e5e7eb;
+        }
+
+        /* Активные вкладки — desktop */
+        #tab-chats:checked ~ .tab-controls label[for="tab-chats"],
+        #tab-diagrams:checked ~ .tab-controls label[for="tab-diagrams"],
+        #tab-files:checked ~ .tab-controls label[for="tab-files"],
+        #tab-models:checked ~ .tab-controls label[for="tab-models"] {
+            background: linear-gradient(120deg, #22c55e, #0ea5e9);
+            color: #f9fafb;
+            box-shadow: 0 10px 25px rgba(34, 197, 94, .35),
+            0 0 0 1px rgba(15, 23, 42, .12);
+            transform: translateY(-1px);
+        }
+
+        #tab-chats:checked ~ .tab-controls label[for="tab-chats"] i,
+        #tab-diagrams:checked ~ .tab-controls label[for="tab-diagrams"] i,
+        #tab-files:checked ~ .tab-controls label[for="tab-files"] i,
+        #tab-models:checked ~ .tab-controls label[for="tab-models"] i {
+            opacity: 1;
+            transform: translateY(-1px);
+        }
+
+        /* какие панели показываем, это можно оставить как было */
+        #tab-chats:checked ~ .tab-content .pane-chats,
+        #tab-diagrams:checked ~ .tab-content .pane-diagrams,
+        #tab-files:checked ~ .tab-content .pane-files,
+        #tab-models:checked ~ .tab-content .pane-models {
+            display: block; /* или flex, как у тебя сейчас */
         }
 
         .tab-content {
@@ -264,6 +346,7 @@
             margin-top: .5rem;
             border: 1px solid rgba(0, 0, 0, .06);
             background: #ffffffa8;
+            height: 77vh;
         }
 
         .tab-pane {
@@ -280,7 +363,8 @@
         /* Активные вкладки — desktop */
         #tab-chats:checked ~ .tab-controls label[for="tab-chats"],
         #tab-diagrams:checked ~ .tab-controls label[for="tab-diagrams"],
-        #tab-files:checked ~ .tab-controls label[for="tab-files"] {
+        #tab-files:checked ~ .tab-controls label[for="tab-files"],
+        #tab-models:checked ~ .tab-controls label[for="tab-models"] {
             background: linear-gradient(135deg, #a7f3d0, #86efac);
             color: #065f46;
             box-shadow: inset 0 0 0 1px rgba(6, 95, 70, .2);
@@ -288,21 +372,24 @@
 
         #tab-chats:checked ~ .tab-content .pane-chats,
         #tab-diagrams:checked ~ .tab-content .pane-diagrams,
-        #tab-files:checked ~ .tab-content .pane-files {
+        #tab-files:checked ~ .tab-content .pane-files,
+        #tab-models:checked ~ .tab-content .pane-models {
             display: block;
         }
 
         /* Активные вкладки — mobile (offcanvas-left) */
-        #mtab-chats:checked ~ .m-tab-controls label[for="mtab-chats"],
+        #mtab-chats:checked#mtab-chats:checked ~ .m-tab-controls label[for="mtab-chats"],
         #mtab-diagrams:checked ~ .m-tab-controls label[for="mtab-diagrams"],
-        #mtab-files:checked ~ .m-tab-controls label[for="mtab-files"] {
+        #mtab-files:checked ~ .m-tab-controls label[for="mtab-files"],
+        #mtab-models:checked ~ .m-tab-controls label[for="mtab-models"] {
             background: #e2e8f0;
             color: #0f172a;
         }
 
         #mtab-chats:checked ~ .m-tab-content .m-pane-chats,
         #mtab-diagrams:checked ~ .m-tab-content .m-pane-diagrams,
-        #mtab-files:checked ~ .m-tab-content .m-pane-files {
+        #mtab-files:checked ~ .m-tab-content .m-pane-files,
+        #mtab-models:checked ~ .m-tab-content .m-pane-models {
             display: block;
         }
 
@@ -552,7 +639,7 @@
 
         /* тонкий скролл (в вебкит-браузерах) */
         #chat-list::-webkit-scrollbar {
-            width: 6px;
+            width: 0;
         }
 
         #chat-list::-webkit-scrollbar-thumb {
@@ -561,7 +648,8 @@
         }
 
         /* карточка чата */
-        #chat-list .chat-item {
+        #chat-list .chat-item,
+        #models-list .chat-item {
             display: flex;
             align-items: center;
             gap: 6px;
@@ -586,13 +674,15 @@
         }
 
         /* hover карточки — только фон/граница, без тяжёлых теней */
-        #chat-list .chat-item:hover {
+        #chat-list .chat-item:hover,
+        #models-list .chat-item:hover {
             background: #f8fafc; /* slate-50 */
             border-color: #d1d5db; /* gray-300 */
         }
 
         /* активная карточка — чёткая левая полоска + контрастная рамка */
-        #chat-list .chat-item.active {
+        #chat-list .chat-item.active,
+        #models-list .chat-item.active {
             background: #f0f7ff; /* очень мягкий голубой */
             border-color: #3b82f6; /* blue-500 */
             position: relative;
@@ -610,7 +700,8 @@
         }
 
         /* кнопка удаления справа — заметна, но ненавязчива */
-        #chat-list .chat-item .delete-btn {
+        #chat-list .chat-item .delete-btn,
+        #models-list .chat-item .delete-btn {
             opacity: .65;
             transition: opacity .12s ease, transform .06s ease;
         }
@@ -1234,6 +1325,29 @@
             background: rgba(255, 255, 255, .7);
         }
 
+        /* Toggle "Использовать базу знаний" — активное состояние */
+        #model-use-kb-toggle.is-on {
+            background: linear-gradient(135deg, #22c55e, #0ea5e9);
+            border-color: rgba(34, 197, 94, 0.8);
+            box-shadow: 0 6px 14px rgba(34, 197, 94, .35),
+            inset 0 0 0 1px rgba(255, 255, 255, .5);
+        }
+
+        #model-use-kb-toggle.is-on .kb-thumb {
+            transform: translateX(1.75rem); /* в конец трека */
+        }
+
+        /* тёмная тема (по желанию) */
+        .dark #model-use-kb-toggle {
+            background: rgba(30, 64, 175, .45);
+            border-color: rgba(148, 163, 184, .7);
+        }
+
+        .dark #model-use-kb-toggle.is-on {
+            background: linear-gradient(135deg, #22c55e, #0ea5e9);
+            border-color: rgba(55, 65, 81, .9);
+        }
+
 
     </style>
 </head>
@@ -1249,18 +1363,20 @@
 
     <!-- Левая панель (desktop) с вкладками -->
     <aside id="left-sidebar"
-           class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 overflow-hidden scrollbar-thin flex-col">
+           class="hidden md:flex w-1/4 bg-white/60 backdrop-blur p-4 overflow-hidden flex-col">
         <div class="tabs">
             <!-- radios -->
             <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-chats" checked>
             <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-diagrams">
             <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-files">
+            <input class="tab-radio" type="radio" name="sidebar-tabs" id="tab-models">
 
             <!-- controls -->
             <div class="tab-controls mb-2">
                 <label for="tab-chats"><i class="fa-regular fa-comments mr-1"></i> Чаты</label>
                 <label for="tab-diagrams"><i class="fa-solid fa-diagram-project mr-1"></i> Диаграммы</label>
                 <label for="tab-files"><i class="fa-regular fa-folder-open mr-1"></i> Файлы</label>
+                <label for="tab-models"><i class="fa-solid fa-robot mr-1"></i> Модели</label>
             </div>
 
             <!-- panes -->
@@ -1311,6 +1427,21 @@
                     </div>
                     <div id="files-list" class="space-y-2 text-sm text-gray-700"></div>
                 </div>
+                <div class="tab-pane pane-models">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-sm font-semibold"></h2>
+                        <button id="new-model-btn"
+                                class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500"
+                                title="Новая модель">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                      d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <ul id="models-list" class="space-y-2 text-sm text-gray-700"></ul>
+                </div>
             </div>
             <!-- FOOTER: кнопка Miro внизу сайдбара -->
             <div class="mt-auto pt-3 border-t border-black/5">
@@ -1360,7 +1491,7 @@
     <!-- Центральная область -->
     <main class="flex-1 flex flex-col">
         <!-- Сообщения -->
-        <div id="chat-box" class="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 scrollbar-thin chat-box-h">
+        <div id="chat-box" class="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 chat-box-h">
             <div class="text-gray-400 text-sm text-center">✨ Новый чат</div>
         </div>
 
@@ -1390,12 +1521,16 @@
     <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-chats" checked>
     <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-diagrams">
     <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-files">
+    <input class="tab-radio" type="radio" name="m-sidebar-tabs" id="mtab-models">
+
 
     <!-- controls -->
-    <div class="m-tab-controls p-3 pt-4 grid grid-cols-3 gap-2">
+    <div class="m-tab-controls p-3 pt-4 grid grid-cols-4 gap-2">
         <label for="mtab-chats" class="text-center text-xs px-2 py-2 rounded-lg border">Чаты</label>
         <label for="mtab-diagrams" class="text-center text-xs px-2 py-2 rounded-lg border">Диаграммы</label>
         <label for="mtab-files" class="text-center text-xs px-2 py-2 rounded-lg border">Файлы</label>
+        <label for="mtab-models" class="text-center text-xs px-2 py-2 rounded-lg border">Модели</label>
+
     </div>
 
     <!-- panes -->
@@ -1436,6 +1571,22 @@
             <!-- список файлов (как и было) -->
             <div id="files-list-mobile" class="space-y-2 text-sm text-gray-700"></div>
         </div>
+        <div class="m-pane-models hidden">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-sm font-semibold">Модели</h2>
+                <button id="new-model-mobile"
+                        class="text-xs bg-green-400 text-white px-2 py-1 rounded hover:bg-green-500"
+                        title="Новая модель">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         class="bi bi-plus-lg" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                              d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                    </svg>
+                </button>
+            </div>
+            <ul id="models-list-mobile" class="space-y-2 text-sm text-gray-700"></ul>
+        </div>
+
     </div>
 
     <!-- FOOTER inside offcanvas (mobile) -->
@@ -1639,6 +1790,89 @@
     </div>
 </div>
 
+<!-- Model Create/Edit Modal -->
+<div id="model-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-60 hidden">
+    <div class="glass w-full max-w-xl rounded-2xl shadow-2xl p-5 relative">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+            </div>
+            <button id="model-modal-close"
+                    class="text-gray-500 hover:text-red-500 rounded-full p-1 transition"
+                    title="Закрыть">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="space-y-4">
+            <div>
+                <label for="model-name-input"
+                       class="block text-xs font-semibold text-slate-600 mb-1">
+                    Название модели
+                </label>
+                <input id="model-name-input" type="text"
+                       class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400
+                              bg-white/80"
+                       placeholder="Например: GPT-4.1 для кода"/>
+            </div>
+
+            <div>
+                <label for="model-prompt-input"
+                       class="block text-xs font-semibold text-slate-600 mb-1">
+                    Системный промпт
+                </label>
+                <textarea id="model-prompt-input" rows="6"
+                          class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm
+                                 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400
+                                 bg-white/80 resize-none overflow-auto"
+                          placeholder="Опишите стиль и поведение модели..."></textarea>
+
+            </div>
+            <div class="flex items-center justify-between mt-1">
+                <div>
+                    <div class="text-xs font-semibold text-slate-600 mb-0.5">
+                        Использовать БЗ
+                    </div>
+                </div>
+
+                <!-- Красивый toggle -->
+                <button type="button"
+                        id="model-use-kb-toggle"
+                        class="relative inline-flex items-center h-6 w-11 rounded-full border border-slate-300
+                               bg-slate-200/80 transition-colors duration-150 ease-out
+                               shadow-inner focus-visible:outline-none focus-visible:ring-2
+                               focus-visible:ring-emerald-400 focus-visible:ring-offset-1 focus-visible:ring-offset-white">
+                    <span class="sr-only">Использовать базу знаний</span>
+                    <span class="kb-thumb inline-block h-5 w-5 rounded-full bg-white shadow
+                                 transform translate-x-0.5 transition-transform duration-150 ease-out"></span>
+                </button>
+
+                <!-- реальный boolean input, чтобы удобно читать состояние из JS -->
+                <input type="checkbox" id="model-use-kb-input" class="hidden">
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
+            <button id="model-modal-cancel"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600
+                           bg-slate-100 hover:bg-slate-200">
+                Отмена
+            </button>
+            <button id="model-modal-save"
+                    class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white
+                           bg-green-400 hover:bg-green-500 shadow-sm inline-flex items-center gap-2">
+                <span>Сохранить</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
 <!-- Miro: красивый оверлей с большим окном -->
 <div id="miro-container"
      class="miro-overlay hidden fixed inset-0 z-[120] flex items-center justify-center">
@@ -1722,6 +1956,7 @@
         $('#chat-list-mobile').html($('#chat-list').html());
         $('#files-list-mobile').html($('#files-list').html());
         $('#diagram-list-mobile').html($('#diagram-list').html());
+        $('#models-list-mobile').html($('#models-list').html());
     }
 
     setInterval(syncLists, 1000);
@@ -2562,9 +2797,15 @@
             showLoader('Думаю...');
 
             try {
+                console.log('send', currentModelId);
                 const response = await fetch('/api/response', {
                     method: 'POST',
-                    body: JSON.stringify({prompt, chat_id: currentChatId, ms_uuid})
+                    body: JSON.stringify({
+                        prompt,
+                        chat_id: currentChatId,
+                        ms_uuid,
+                        model_id: currentModelId
+                    })
                 });
 
                 if (!response.ok) throw new Error(`Ошибка ${response.status}`);
@@ -2668,6 +2909,7 @@
         redirectMessageId = null;
     }
 </script>
+<script src="/static/models.js"></script>
 
 </body>
 </html>

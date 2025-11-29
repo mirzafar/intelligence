@@ -3,6 +3,7 @@ from views.designs import DesignsHandler
 from views.diagrams import DiagramsHandler, DiagramHandler
 from views.files import FilesHandler, FileHandler, FileDownloadHandler
 from views.main import MainHandler
+from views.models import ModelsHandler, ModelHandler
 from views.response import ResponseHandler
 
 __all__ = [
@@ -15,5 +16,7 @@ __all__ = [
     'ResponseHandler',
     'DiagramsHandler',
     'DiagramHandler',
-    'DesignsHandler'
+    'DesignsHandler',
+    'ModelsHandler',
+    'ModelHandler',
 ]

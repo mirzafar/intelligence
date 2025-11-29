@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import motor.motor_tornado
@@ -19,7 +18,8 @@ from views import (
     FileDownloadHandler,
     DiagramsHandler,
     DiagramHandler,
-    DesignsHandler
+    DesignsHandler,
+    ModelsHandler, ModelHandler
 )
 
 
@@ -53,6 +53,8 @@ def make_app():
 
         (r'/api/designs/([a-fA-F0-9-]{36})', DesignsHandler),
 
+        (r'/api/models', ModelsHandler),
+        (r'/api/models/([a-fA-F0-9]{24})/', ModelHandler),
     ], **settings, autoreload=True, debug=True)
 
 

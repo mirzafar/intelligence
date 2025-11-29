@@ -8,6 +8,7 @@ import tornado.websocket
 from bson import ObjectId
 
 from core.ai_client import ai_client
+from core.handlers import BaseHandler
 from core.utils import StrUtils
 
 __system_message__ = '''Общий промт 
@@ -163,13 +164,15 @@ D) **Допущения** (если были).
 '''
 
 
-class ResponseHandler(tornado.web.RequestHandler):
+class ResponseHandler(BaseHandler):
     async def __function(
         self,
         prompt: str,
         ms_uuid: str,
         content: List[dict] = None,
-        chat_id: str = None
+        chat_id: str = None,
+        instructions: str = None,
+        use_knowledge_base: bool = True
     ) -> list:
         try:
             if not content:
@@ -192,11 +195,11 @@ class ResponseHandler(tornado.web.RequestHandler):
                 else:
                     input_content.append(c)
 
-            if ai_client.has_files is True:
+            if ai_client.has_files is True and use_knowledge_base:
                 response = await ai_client.responses.create(
                     model='gpt-4o-mini',
                     temperature=0.4,
-                    instructions=__system_message__,
+                    instructions=instructions or __system_message__,
                     input=input_content,
                     stream=True,
                     tools=[
@@ -207,7 +210,7 @@ class ResponseHandler(tornado.web.RequestHandler):
             else:
                 response = await ai_client.responses.create(
                     model='gpt-5-nano',
-                    instructions=__system_message__,
+                    instructions=instructions or __system_message__,
                     input=input_content,
                     stream=True
                 )
@@ -259,11 +262,10 @@ class ResponseHandler(tornado.web.RequestHandler):
         self.set_header('Cache-Control', 'no-cache, no-transform')
         self.set_header('X-Accel-Buffering', 'no')
 
-        data = json.loads(self.request.body)
-
-        prompt = StrUtils.to_str(data.get('prompt'))
-        chat_id = StrUtils.to_str(data.get('chat_id'))
-        ms_uuid = StrUtils.to_str(data.get('ms_uuid')) or uuid4()
+        prompt = StrUtils.to_str(self.json.get('prompt'))
+        chat_id = StrUtils.to_str(self.json.get('chat_id'))
+        ms_uuid = StrUtils.to_str(self.json.get('ms_uuid')) or uuid4()
+        model_id = self.json.get('model_id')
 
         if self.request.connection.stream.closed():
             return
@@ -277,11 +279,20 @@ class ResponseHandler(tornado.web.RequestHandler):
         chat_id = chat_id or str(ObjectId())
         await self.flush()
 
+        instructions = None
+        use_knowledge_base = True
+        if model_id and ObjectId.is_valid(model_id):
+            model = await self.settings['db'].models.find_one({'_id': ObjectId(model_id)})
+            instructions = model.get('prompt')
+            use_knowledge_base = model.get('use_knowledge_base', True)
+
         content = await self.__function(
             prompt=prompt,
             content=chat['content'] if chat else None,
             ms_uuid=ms_uuid,
-            chat_id=chat_id
+            chat_id=chat_id,
+            instructions=instructions,
+            use_knowledge_base=use_knowledge_base
         )
 
         await self.settings['db'].chats.update_one({'_id': ObjectId(chat_id)}, {'$set': {
